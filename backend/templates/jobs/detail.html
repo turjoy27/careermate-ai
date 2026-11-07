@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ job.title }} at {{ job.company_name }} — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'jobs-list' %}" class="text-decoration-none text-secondary">Job Matches</a>
+<span class="mx-1">/</span>
+<span class="text-primary">{{ job.title }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Left Column: Job Description & Requirements -->
+  <div class="col-lg-8">
+    <div class="cm-card p-4 p-md-5 mb-4">
+      <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h3 class="fw-bold mb-0 text-dark">{{ job.title }}</h3>
+            <span class="badge bg-primary-subtle text-primary">{{ job.get_job_type_display }}</span>
+            <span class="badge bg-light text-secondary border">{{ job.get_workplace_type_display }}</span>
+          </div>
+          <div class="text-secondary small">
+            <i class="bi bi-building me-1"></i><strong class="text-dark">{{ job.company_name }}</strong> &bull;
+            <i class="bi bi-geo-alt me-1"></i>{{ job.location }}
+            {% if job.salary_range %}&bull; <span class="text-success fw-semibold">{{ job.salary_range }}</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <form action="{% url 'jobs-toggle-save' job.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Save Job">
+              <i class="bi {% if is_saved %}bi-bookmark-fill text-warning{% else %}bi-bookmark{% endif %} me-1"></i>
+              {% if is_saved %}Saved{% else %}Save{% endif %}
+            </button>
+          </form>
+          {% if job.apply_url %}
+          <a href="{{ job.apply_url }}" target="_blank" class="btn btn-sm btn-primary-custom">
+            Apply on Company Site <i class="bi bi-box-arrow-up-right ms-1"></i>
+          </a>
+          {% elif job.apply_email %}
+          <a href="mailto:{{ job.apply_email }}?subject=Application for {{ job.title }}" class="btn btn-sm btn-primary-custom">
+            Apply via Email <i class="bi bi-envelope ms-1"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Job Overview -->
+      <h5 class="fw-bold mb-3 text-dark">Job Overview</h5>
+      <p class="text-secondary" style="line-height: 1.7;">
+        {{ job.description|linebreaksbr }}
+      </p>
+
+      {% if job.responsibilities %}
+      <h5 class="fw-bold mt-4 mb-3 text-dark">Key Responsibilities</h5>
+      <div class="text-secondary" style="line-height: 1.7;">
+        {{ job.responsibilities|linebreaksbr }}
+      </div>
+      {% endif %}
+
+      {% if job.requirements %}
+      <h5 class="fw-bold mt-4 mb-3 text-dark">Candidate Qualifications & Requirements</h5>
+      <div class="text-secondary" style="line-height: 1.7;">
+        {{ job.requirements|linebreaksbr }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right Column: Transparent Fit Diagnostic -->
+  <div class="col-lg-4">
+    <!-- Match Score Card -->
+    <div class="cm-card p-4 mb-4 text-center">
+      <div class="stat-icon primary mx-auto mb-2" style="width: 72px; height: 72px;">
+        <span class="fs-2 fw-bold text-primary">{{ fit.match_score }}%</span>
+      </div>
+      <h5 class="fw-bold mb-1">Calculated Fit Score</h5>
+      <p class="text-muted small mb-3">Deterministic algorithmic matching (Not hallucinated by AI)</p>
+
+      <div class="progress mb-3" style="height: 8px;">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ fit.match_score }}%;"></div>
+      </div>
+
+      <div class="p-3 bg-light rounded-3 text-start border small">
+        <div class="fw-semibold text-dark mb-1"><i class="bi bi-calculator text-primary me-1"></i>Scoring Formula:</div>
+        <p class="text-muted mb-0" style="line-height: 1.45;">{{ fit.breakdown_reason }}</p>
+      </div>
+    </div>
+
+    <!-- Required Skills Breakdown -->
+    <div class="cm-card p-4 mb-4">
+      <h6 class="fw-bold mb-3"><i class="bi bi-check2-all text-success me-1"></i>Core Required Skills</h6>
+
+      <div class="mb-3">
+        <span class="small text-muted d-block mb-1">You Have (Matched):</span>
+        {% if fit.matched_required %}
+          <div class="d-flex flex-wrap gap-1">
+            {% for s in fit.matched_required %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+              <i class="bi bi-check me-1"></i>{{ s }}
+            </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <span class="text-muted small fst-italic">None matched yet.</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <span class="small text-muted d-block mb-1">Missing from Your Profile:</span>
+        {% if fit.missing_required %}
+          <div class="d-flex flex-wrap gap-1">
+            {% for s in fit.missing_required %}
+            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-2 py-1">
+              <i class="bi bi-x me-1"></i>{{ s }}
+            </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <span class="text-success small"><i class="bi bi-stars me-1"></i>You cover all required skills!</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if job.preferred_skills_list %}
+    <div class="cm-card p-4">
+      <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle text-primary me-1"></i>Preferred / Nice-to-Have</h6>
+      <div class="d-flex flex-wrap gap-1">
+        {% for s in job.preferred_skills_list %}
+        <span class="badge bg-light text-muted border px-2 py-1">{{ s }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

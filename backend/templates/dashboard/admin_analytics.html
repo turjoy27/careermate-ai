@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Platform Administration & Analytics — CareerMate AI{% endblock %}
+{% block breadcrumbs %}Platform Operations / Analytics & Moderation{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+  <div class="col-md-8">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold">
+        <i class="bi bi-shield-lock-fill me-1"></i>Staff Only
+      </span>
+      <span class="text-muted small">Real-time Platform Telemetry</span>
+    </div>
+    <h3 class="fw-bold mb-0">Platform Administration & Analytics</h3>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="/admin/" target="_blank" class="btn btn-dark shadow-sm">
+      <i class="bi bi-gear-fill me-1"></i>Open Django Admin
+    </a>
+  </div>
+</div>
+
+<!-- Primary SaaS KPI Cards -->
+<div class="row g-3 mb-4">
+  <!-- Total Users -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-secondary small fw-semibold">Total Registered Users</span>
+        <div class="p-2 bg-primary-subtle text-primary rounded-circle">
+          <i class="bi bi-people-fill fs-5"></i>
+        </div>
+      </div>
+      <h3 class="fw-bold mb-1">{{ total_users }}</h3>
+      <div class="text-muted small">
+        <span class="text-primary fw-semibold">{{ student_count }}</span> Students &bull;
+        <span class="text-success fw-semibold">{{ jobseeker_count }}</span> Job Seekers
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumes Created -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-secondary small fw-semibold">Resumes & CVs Built</span>
+        <div class="p-2 bg-success-subtle text-success rounded-circle">
+          <i class="bi bi-file-earmark-person-fill fs-5"></i>
+        </div>
+      </div>
+      <h3 class="fw-bold mb-1">{{ total_resumes }}</h3>
+      <div class="text-muted small">Generated with ReportLab PDF export</div>
+    </div>
+  </div>
+
+  <!-- Mock Interviews -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-secondary small fw-semibold">Mock Interviews</span>
+        <div class="p-2 bg-warning-subtle text-warning rounded-circle">
+          <i class="bi bi-award-fill fs-5"></i>
+        </div>
+      </div>
+      <h3 class="fw-bold mb-1">{{ total_interviews }}</h3>
+      <div class="text-muted small">
+        <span class="fw-semibold text-dark">{{ avg_interview_score }}/10</span> Avg Score ({{ completed_interviews }} completed)
+      </div>
+    </div>
+  </div>
+
+  <!-- Learning Roadmaps -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-secondary small fw-semibold">Learning Roadmaps</span>
+        <div class="p-2 bg-info-subtle text-info rounded-circle">
+          <i class="bi bi-map-fill fs-5"></i>
+        </div>
+      </div>
+      <h3 class="fw-bold mb-1">{{ total_roadmaps }}</h3>
+      <div class="text-muted small">
+        <span class="fw-semibold text-dark">{{ avg_roadmap_progress }}%</span> Avg Milestone Completion
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Secondary Metrics: Jobs, Resources, Moderation -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3.5">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary-subtle text-primary p-3">
+          <i class="bi bi-briefcase-fill fs-4"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Active Job Listings</div>
+          <h4 class="fw-bold mb-0">{{ active_jobs }} <small class="text-muted fs-6 font-monospace">/ {{ total_jobs }} total</small></h4>
+          <span class="text-secondary small">{{ total_saved_jobs }} total job saves</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3.5">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-success-subtle text-success p-3">
+          <i class="bi bi-collection-play-fill fs-4"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Curated Learning Library</div>
+          <h4 class="fw-bold mb-0">{{ curated_resources_count }}</h4>
+          <span class="text-secondary small">Vetted courses & tutorials</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3.5">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-danger-subtle text-danger p-3">
+          <i class="bi bi-flag-fill fs-4"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Pending Moderation Tickets</div>
+          <h4 class="fw-bold mb-0 text-danger">{{ pending_reports }}</h4>
+          <span class="text-secondary small">User feedback requiring review</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Moderation & Registrations Tables -->
+<div class="row g-4">
+  <!-- Recent Reported Content -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-flag text-danger me-2"></i>Recent Moderation Tickets</h6>
+        <a href="/admin/roadmaps/reportedcontent/" target="_blank" class="btn btn-sm btn-outline-secondary">
+          Manage All <i class="bi bi-arrow-up-right ms-1"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-secondary">
+              <tr>
+                <th class="ps-4">Subject</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for report in recent_reports %}
+              <tr>
+                <td class="ps-4">
+                  <div class="fw-semibold small text-dark text-truncate" style="max-width: 220px;">{{ report.subject }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ report.user.email|default:"Anonymous" }}</div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary-subtle text-secondary small">{{ report.get_category_display }}</span>
+                </td>
+                <td>
+                  <span class="badge {% if report.status == 'pending' %}bg-danger-subtle text-danger{% elif report.status == 'resolved' %}bg-success-subtle text-success{% else %}bg-warning-subtle text-dark{% endif %} small">
+                    {{ report.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-muted small">{{ report.created_at|date:"M d, H:i" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">No content tickets submitted yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent User Signups -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-plus text-primary me-2"></i>Recent Candidate Signups</h6>
+        <a href="/admin/accounts/user/" target="_blank" class="btn btn-sm btn-outline-secondary">
+          Manage Users <i class="bi bi-arrow-up-right ms-1"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-secondary">
+              <tr>
+                <th class="ps-4">Candidate</th>
+                <th>Role</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in recent_users %}
+              <tr>
+                <td class="ps-4">
+                  <div class="fw-semibold small text-dark">{{ u.full_name }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ u.email }}</div>
+                </td>
+                <td>
+                  <span class="badge {% if u.role == 'student' %}bg-primary-subtle text-primary{% elif u.role == 'jobseeker' %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} small">
+                    {{ u.get_role_display }}
+                  </span>
+                </td>
+                <td class="text-muted small">{{ u.date_joined|date:"M d" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted py-4">No users registered yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

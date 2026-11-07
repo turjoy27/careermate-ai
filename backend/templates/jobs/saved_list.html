@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Saved Jobs — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'jobs-list' %}" class="text-decoration-none text-secondary">Job Matches</a>
+<span class="mx-1">/</span>
+<span class="text-primary">Saved Jobs</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Bookmarked Jobs</h3>
+    <p class="text-muted small mb-0">Track and review positions you have saved for application.</p>
+  </div>
+  <a href="{% url 'jobs-list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to All Jobs
+  </a>
+</div>
+
+{% if saved_jobs %}
+<div class="d-flex flex-column gap-3">
+  {% for item in saved_jobs %}
+  <div class="cm-card p-4">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          <h5 class="fw-bold mb-0 text-dark">{{ item.job.title }}</h5>
+          <span class="badge bg-light text-secondary border small">{{ item.job.get_job_type_display }}</span>
+          <span class="badge bg-light text-secondary border small">{{ item.job.get_workplace_type_display }}</span>
+        </div>
+        <div class="text-muted small mb-2">
+          <strong>{{ item.job.company_name }}</strong> &bull; {{ item.job.location }}
+        </div>
+        <div class="small text-muted">
+          Saved on {{ item.entry.saved_at|date:"M d, Y" }}
+        </div>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <div class="fs-4 fw-bold text-primary mb-2">{{ item.match_score }}% Match</div>
+        <div class="d-flex justify-content-lg-end gap-2">
+          <form action="{% url 'jobs-toggle-save' item.job.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove from saved">
+              <i class="bi bi-trash me-1"></i>Remove
+            </button>
+          </form>
+          <a href="{% url 'jobs-detail' item.job.id %}" class="btn btn-sm btn-primary-custom">
+            View Job
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cm-card p-5 text-center">
+  <div class="stat-icon info mx-auto mb-3" style="width: 56px; height: 56px;">
+    <i class="bi bi-bookmark fs-3"></i>
+  </div>
+  <h5 class="fw-bold mb-1">No Saved Jobs Yet</h5>
+  <p class="text-muted small mb-3">Browse curated jobs and click the bookmark icon to save roles here.</p>
+  <a href="{% url 'jobs-list' %}" class="btn btn-primary-custom">Browse Job Matches</a>
+</div>
+{% endif %}
+{% endblock %}

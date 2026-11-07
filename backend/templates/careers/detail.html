@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}{{ rec.title }} — Skill-Gap Report — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'careers-recommendations' %}" class="text-decoration-none text-secondary">Career Recommendations</a>
+<span class="mx-1">/</span>
+<span class="text-primary">{{ rec.title }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <h3 class="fw-bold mb-0">{{ rec.title }}</h3>
+      {% if rec.growth_potential %}
+      <span class="badge bg-success-subtle text-success">
+        <i class="bi bi-graph-up-arrow me-1"></i>Growth: {{ rec.growth_potential }}
+      </span>
+      {% endif %}
+    </div>
+    <p class="text-muted small mb-0">
+      Deep-dive compatibility assessment & actionable skill-gap roadmap.
+    </p>
+  </div>
+  <a href="{% url 'careers-recommendations' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Recommendations
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Match & Outlook -->
+  <div class="col-lg-5">
+    <!-- Match Card -->
+    <div class="cm-card p-4 mb-4 text-center">
+      <div class="stat-icon primary mx-auto mb-3" style="width: 72px; height: 72px;">
+        <span class="fs-2 fw-bold text-primary">{{ rec.match_score }}%</span>
+      </div>
+      <h4 class="fw-bold mb-1">Career Compatibility Score</h4>
+      <p class="text-muted small mb-3">Based on your coursework, technical skills, and experience.</p>
+
+      <div class="progress mb-3" style="height: 10px;">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ rec.match_score }}%;" aria-valuenow="{{ rec.match_score }}" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+
+      <div class="p-3 bg-light rounded-3 text-start small border">
+        <div class="fw-semibold text-dark mb-1"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Why You Fit This Role:</div>
+        <p class="text-secondary mb-0" style="line-height: 1.5;">{{ rec.suitability_reason }}</p>
+      </div>
+    </div>
+
+    <!-- Bangladesh Market Card -->
+    <div class="cm-card p-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+        <h5 class="fw-bold mb-0">Bangladesh Industry Perspective</h5>
+      </div>
+      <p class="text-secondary small mb-3" style="line-height: 1.6;">
+        {{ rec.market_outlook_bd }}
+      </p>
+      <div class="p-3 bg-primary-subtle text-primary rounded-3 small">
+        <i class="bi bi-info-circle-fill me-1"></i>
+        Hiring is strong across Dhaka tech hubs (Banani, Gulshan, Mohakhali, Dhanmondi) and international remote engineering contracts.
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Skill Gap Matrix & Actionable Roadmap -->
+  <div class="col-lg-7">
+    <!-- Skill Gap Matrix -->
+    <div class="cm-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-diagram-3-fill text-primary me-2"></i>Skill-Gap Diagnostic</h5>
+        <span class="badge bg-secondary-subtle text-secondary small">Comparison Matrix</span>
+      </div>
+
+      <!-- Strengths / Matched Skills -->
+      <div class="mb-4">
+        <h6 class="fw-bold text-success mb-2">
+          <i class="bi bi-check-circle-fill me-1"></i>Your Current Strengths (Matched Skills)
+        </h6>
+        {% if rec.matched_skills %}
+          <div class="d-flex flex-wrap gap-2">
+            {% for s in rec.matched_skills %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6 fw-normal">
+              <i class="bi bi-check2 me-1"></i>{{ s }}
+            </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small">No direct match with your recorded skills. Upskilling required.</p>
+        {% endif %}
+      </div>
+
+      <!-- Missing Skills -->
+      <div class="mb-3">
+        <h6 class="fw-bold text-danger mb-2">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>Skill Gaps to Bridge (Missing Requirements)
+        </h6>
+        {% if rec.missing_skills %}
+          <div class="d-flex flex-wrap gap-2">
+            {% for s in rec.missing_skills %}
+            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-2 fs-6 fw-normal">
+              <i class="bi bi-arrow-up-right me-1"></i>{{ s }}
+            </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-success small"><i class="bi bi-stars me-1"></i>Congratulations! You already hold all core skills for this role.</p>
+        {% endif %}
+      </div>
+
+      <!-- Required Competencies Reference -->
+      <div class="pt-3 border-top">
+        <div class="text-muted small fw-semibold mb-2">Complete Role Competency Checklist:</div>
+        <div class="d-flex flex-wrap gap-1">
+          {% for r in rec.required_skills %}
+          <span class="badge bg-light text-muted border px-2 py-1 small">{{ r }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Actionable Steps -->
+    <div class="cm-card p-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-list-check text-primary me-2"></i>Recommended Immediate Next Steps</h5>
+      <p class="text-muted small mb-3">Follow these targeted actions to elevate your candidacy for this role:</p>
+
+      <div class="d-flex flex-column gap-3">
+        {% for step in rec.recommended_next_steps %}
+        <div class="p-3 bg-light rounded-3 border d-flex gap-3 align-items-start">
+          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; min-width: 28px; font-size: 0.85rem;">
+            {{ forloop.counter }}
+          </div>
+          <div class="small text-secondary" style="line-height: 1.5;">
+            {{ step }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

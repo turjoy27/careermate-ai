@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Interview Scorecard — {{ session.target_role }} — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'interviews-setup' %}" class="text-decoration-none text-secondary">Mock Interviews</a>
+<span class="mx-1">/</span>
+<span class="text-primary">{{ session.target_role }} Scorecard</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-1">Interview Performance Scorecard</h3>
+    <p class="text-muted small mb-0">
+      Comprehensive evaluation for <strong>{{ session.target_role }}</strong> ({{ session.get_difficulty_display }}).
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'interviews-setup' %}" class="btn btn-primary-custom btn-sm">
+      <i class="bi bi-play-fill me-1"></i>Start Another Session
+    </a>
+  </div>
+</div>
+
+<!-- Score Banner -->
+<div class="cm-card p-4 p-md-5 mb-4 text-center" style="background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);">
+  <div class="stat-icon primary mx-auto mb-3" style="width: 80px; height: 80px;">
+    <span class="fs-1 fw-bold text-primary">{{ session.overall_score|default:"--" }}</span>
+  </div>
+  <h4 class="fw-bold mb-1">Overall Interview Score / 10</h4>
+  <p class="text-muted small mx-auto mb-3" style="max-width: 500px;">
+    {% if session.overall_score >= 8.0 %}
+    Outstanding performance! Your responses demonstrate solid domain knowledge, clear communication, and architectural maturity.
+    {% elif session.overall_score >= 6.5 %}
+    Good performance. You possess the foundational principles; focus on deepening edge-case handling and STAR story structuring.
+    {% else %}
+    Needs additional preparation. Review the ideal response concepts below and practice elaborating on technical trade-offs.
+    {% endif %}
+  </p>
+  <div class="d-flex justify-content-center gap-2">
+    <span class="badge bg-light text-secondary border px-3 py-2 small">Total Questions: {{ questions|length }}</span>
+    <span class="badge bg-light text-secondary border px-3 py-2 small">Completed: {{ session.completed_at|date:"M d, Y" }}</span>
+  </div>
+</div>
+
+<!-- Question by Question Breakdown -->
+<div class="d-flex flex-column gap-4">
+  {% for q in questions %}
+  <div class="cm-card p-4">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <span class="badge bg-primary-subtle text-primary small mb-1">Q{{ q.order }}: {{ q.category }}</span>
+        <h5 class="fw-bold text-dark mb-0">"{{ q.question_text }}"</h5>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-success-subtle text-success fs-6 fw-bold px-3 py-1 rounded-pill">
+          {{ q.score|default:"0" }} / 10
+        </span>
+      </div>
+    </div>
+
+    <!-- User's Answer -->
+    <div class="p-3 bg-light rounded-3 border text-secondary small mb-3">
+      <strong>Your Answer:</strong><br>
+      {{ q.user_answer|linebreaksbr }}
+    </div>
+
+    <!-- AI Evaluation -->
+    <div class="p-3 bg-primary-subtle text-primary rounded-3 small mb-3">
+      <strong>Feedback:</strong> {{ q.feedback_summary }}
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="p-3 border rounded-3 bg-light h-100 small">
+          <strong class="text-success d-block mb-1"><i class="bi bi-check-circle-fill me-1"></i>Strengths:</strong>
+          <ul class="mb-0 ps-3 text-secondary">
+            {% for st in q.strengths %}
+            <li>{{ st }}</li>
+            {% empty %}
+            <li>Clear articulation.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="p-3 border rounded-3 bg-light h-100 small">
+          <strong class="text-warning-emphasis d-block mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Areas to Polish:</strong>
+          <ul class="mb-0 ps-3 text-secondary">
+            {% for imp in q.areas_for_improvement %}
+            <li>{{ imp }}</li>
+            {% empty %}
+            <li>Elaborate on specifics.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

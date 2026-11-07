@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Onboarding Setup — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}Account Setup Wizard{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-xl-8">
+    <div class="cm-card p-4 p-md-5 mb-4">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="stat-icon primary">
+          <i class="bi bi-magic fs-3"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-1">Set Up Your Career Profile</h3>
+          <p class="text-muted small mb-0">
+            Tell us about your background so CareerMate AI can tailor recommendations and skill evaluations to you.
+          </p>
+        </div>
+      </div>
+
+      <div class="p-3 bg-light rounded-3 mb-4 border d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-muted small">Registered Role:</span>
+          <span class="badge badge-role {% if user.role == 'student' %}badge-student{% else %}badge-jobseeker{% endif %} ms-2">
+            {{ user.get_role_display }}
+          </span>
+        </div>
+        <div class="small text-muted">
+          Signed in as <strong>{{ user.email }}</strong>
+        </div>
+      </div>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <h5 class="fw-semibold mb-3 text-primary">
+          <i class="bi bi-person-lines-fill me-2"></i>1. Professional Identity
+        </h5>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Professional Headline</label>
+          {{ profile_form.headline }}
+          <div class="form-text small">e.g., "Final-year Computer Science Student | Aspiring Django Backend Developer"</div>
+          {% if profile_form.headline.errors %}
+          <div class="text-danger small mt-1">{{ profile_form.headline.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Target Career Goal</label>
+          {{ profile_form.target_career }}
+          <div class="form-text small">What position or career path are you aiming for in the next 1–2 years?</div>
+          {% if profile_form.target_career.errors %}
+          <div class="text-danger small mt-1">{{ profile_form.target_career.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">City</label>
+            {{ profile_form.city }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Country</label>
+            {{ profile_form.country }}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Contact Phone</label>
+            {{ profile_form.phone }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">LinkedIn Profile URL</label>
+            {{ profile_form.linkedin_url }}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">GitHub Profile URL</label>
+            {{ profile_form.github_url }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Portfolio / Website</label>
+            {{ profile_form.portfolio_url }}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Professional Summary / Bio</label>
+          {{ profile_form.summary }}
+          <div class="form-text small">A concise summary highlighting your studies, key projects, and career motivation.</div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+          <a href="{% url 'dashboard-home' %}" class="btn btn-light px-4">Skip for Now</a>
+          <button type="submit" class="btn btn-primary-custom px-4 py-2">
+            <i class="bi bi-check2-circle me-1"></i>Save & Launch Dashboard
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

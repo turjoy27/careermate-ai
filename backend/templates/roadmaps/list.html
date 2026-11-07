@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Roadmaps & Resources — CareerMate AI{% endblock %}
+{% block breadcrumbs %}Career Development / Learning Roadmaps{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+  <div class="col-md-8">
+    <h3 class="fw-bold mb-1"><i class="bi bi-map text-primary me-2"></i>Personalized Learning Roadmaps</h3>
+    <p class="text-secondary mb-0">Bridge your diagnosed skill gaps with structured Beginner, Intermediate, and Advanced learning milestones.</p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{% url 'roadmaps-create' %}" class="btn btn-primary px-3 shadow-sm">
+      <i class="bi bi-plus-circle me-1"></i>Generate New Roadmap
+    </a>
+  </div>
+</div>
+
+<!-- Active & Saved Roadmaps -->
+<div class="row g-4 mb-5">
+  {% if roadmaps %}
+    {% for r in roadmaps %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm border-0 position-relative">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-primary-subtle text-primary px-2.5 py-1.5 rounded-pill">
+              <i class="bi bi-clock me-1"></i>{{ r.estimated_duration }}
+            </span>
+            <span class="badge bg-light text-muted border">
+              {{ r.created_at|date:"M d, Y" }}
+            </span>
+          </div>
+
+          <h5 class="fw-bold text-dark mt-2 mb-1">{{ r.target_role }}</h5>
+          <p class="text-muted small text-truncate-2 mb-3">
+            {{ r.skill_gap_summary|default:"Structured learning curriculum personalized to your current competency level." }}
+          </p>
+
+          <div class="mt-auto">
+            <div class="d-flex justify-content-between align-items-center small text-secondary mb-1">
+              <span>Overall Progress</span>
+              <span class="fw-bold text-dark">{{ r.progress_percentage }}%</span>
+            </div>
+            <div class="progress mb-3" style="height: 8px;">
+              <div class="progress-bar bg-success progress-bar-striped" role="progressbar" style="width: {{ r.progress_percentage }}%;" aria-valuenow="{{ r.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
+              <span><i class="bi bi-check2-circle text-success me-1"></i>{{ r.completed_milestones }}/{{ r.total_milestones }} Milestones</span>
+              <a href="{% url 'roadmaps-detail' pk=r.id %}" class="btn btn-sm btn-outline-primary">
+                View Roadmap <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm text-center py-5">
+        <div class="card-body">
+          <div class="rounded-circle bg-primary-subtle text-primary p-3 d-inline-flex mb-3">
+            <i class="bi bi-map-fill fs-2"></i>
+          </div>
+          <h5 class="fw-bold">No Learning Roadmaps Generated Yet</h5>
+          <p class="text-secondary max-w-500 mx-auto mb-4">
+            Tell us your target career aspiration (e.g. Full-Stack Developer, DevOps Engineer, Machine Learning Specialist), and CareerMate AI will architect a 3-stage curriculum to get you job-ready.
+          </p>
+          <a href="{% url 'roadmaps-create' %}" class="btn btn-primary px-4">
+            <i class="bi bi-magic me-2"></i>Generate Your First Roadmap
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Curated Learning Resources Section -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="fw-bold mb-1"><i class="bi bi-collection-play text-primary me-2"></i>Curated Learning Resources</h4>
+    <p class="text-secondary small mb-0">High-yield courses, interactive docs, and tutorials vetted for Bangladesh tech careers.</p>
+  </div>
+  {% if categories %}
+  <div class="d-none d-md-flex gap-1 flex-wrap">
+    <a href="{% url 'roadmaps-list' %}" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill">
+      All
+    </a>
+    {% for cat in categories %}
+    <a href="?category={{ cat }}" class="btn btn-sm {% if selected_category == cat %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill">
+      {{ cat }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  {% for res in curated_resources %}
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body p-3.5 d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary-subtle text-secondary small rounded-pill">{{ res.category }}</span>
+          {% if res.is_free %}
+          <span class="badge bg-success-subtle text-success small rounded-pill">Free</span>
+          {% else %}
+          <span class="badge bg-warning-subtle text-dark small rounded-pill">Paid</span>
+          {% endif %}
+        </div>
+        <h6 class="fw-bold mb-1 text-dark">{{ res.title }}</h6>
+        <p class="text-muted small mb-3 text-truncate-2">{{ res.description|default:"Recommended industry learning resource." }}</p>
+        <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+          <span class="badge bg-light text-muted border text-capitalize">{{ res.difficulty }}</span>
+          <a href="{{ res.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-link text-primary p-0 text-decoration-none">
+            Open Resource <i class="bi bi-box-arrow-up-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="card border-0 shadow-sm p-4 text-center text-muted">
+      <p class="mb-0">No curated resources found for the selected category.</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

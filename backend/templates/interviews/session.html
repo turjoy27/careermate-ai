@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% block title %}Interview: Question {{ current_order }} — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'interviews-setup' %}" class="text-decoration-none text-secondary">Mock Interviews</a>
+<span class="mx-1">/</span>
+<span class="text-primary">{{ session.target_role }} (Q{{ current_order }})</span>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header: Progress & Session Metadata -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-1">{{ session.target_role }} &mdash; Question {{ current_order }} of {{ questions|length }}</h3>
+    <span class="badge bg-light text-secondary border small">{{ session.get_difficulty_display }}</span>
+    <span class="badge bg-light text-secondary border small">{{ session.get_question_type_display }}</span>
+  </div>
+
+  <div class="d-flex gap-2 align-items-center">
+    {% if session.is_completed %}
+    <a href="{% url 'interviews-summary' session.id %}" class="btn btn-sm btn-success">
+      <i class="bi bi-trophy-fill me-1"></i>View Final Scorecard
+    </a>
+    {% endif %}
+    <a href="{% url 'interviews-setup' %}" class="btn btn-sm btn-outline-secondary">
+      Exit Session
+    </a>
+  </div>
+</div>
+
+<!-- Question Navigation Pills -->
+<div class="d-flex gap-2 mb-4 overflow-x-auto pb-1">
+  {% for q in questions %}
+  <a
+    href="{% url 'interviews-session' session.id %}?q={{ q.order }}"
+    class="btn btn-sm {% if q.order == current_order %}btn-primary-custom{% elif q.score is not None %}btn-outline-success{% else %}btn-outline-secondary{% endif %} px-3"
+  >
+    Q{{ q.order }}
+    {% if q.score is not None %}
+    <i class="bi bi-check-circle-fill ms-1"></i>({{ q.score }}/10)
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+{% if active_question %}
+<div class="row g-4">
+  <!-- Left Column: Question Details & Answer Input / Scorecard -->
+  <div class="col-lg-8">
+    <!-- Question Card -->
+    <div class="cm-card p-4 p-md-5 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill">
+          <i class="bi bi-question-circle me-1"></i>{{ active_question.category }}
+        </span>
+        {% if active_question.score is not None %}
+        <span class="badge bg-success-subtle text-success fs-6 fw-bold px-3 py-1 rounded-pill">
+          Score: {{ active_question.score }} / 10
+        </span>
+        {% endif %}
+      </div>
+
+      <h4 class="fw-bold text-dark mb-4" style="line-height: 1.45;">
+        "{{ active_question.question_text }}"
+      </h4>
+
+      <!-- Interviewer Intent Callout -->
+      {% if active_question.intent_explanation %}
+      <div class="p-3 bg-light rounded-3 border-start border-3 border-primary mb-3 small">
+        <div class="fw-semibold text-dark mb-1">
+          <i class="bi bi-eye-fill text-primary me-1"></i>What the interviewer is testing:
+        </div>
+        <p class="text-secondary mb-0">{{ active_question.intent_explanation }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Approach Tip -->
+      {% if active_question.sample_approach %}
+      <div class="p-3 bg-light rounded-3 border small text-muted mb-4">
+        <div class="fw-semibold text-dark mb-1">
+          <i class="bi bi-lightbulb-fill text-warning me-1"></i>Recommended Approach:
+        </div>
+        <p class="mb-0">{{ active_question.sample_approach }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Answer Section -->
+      {% if active_question.score is None %}
+      <!-- Submission Form -->
+      <form action="{% url 'interviews-submit-answer' session.id active_question.id %}" method="post" id="answerForm">
+        {% csrf_token %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label small fw-semibold mb-0">Your Response:</label>
+            <span class="small text-muted" id="answerCounter">0 words</span>
+          </div>
+          <textarea
+            name="answer"
+            id="userAnswerInput"
+            class="form-control"
+            rows="6"
+            placeholder="Type your structured answer here. Speak to your practical experience, reasoning, and technical principles..."
+            required
+            minlength="10"
+          ></textarea>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="small text-muted">
+            <i class="bi bi-shield-lock me-1"></i>Evaluated objectively against rubric guidelines
+          </span>
+          <button type="submit" class="btn btn-primary-custom px-4 py-2" id="btnSubmitAnswer">
+            <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
+            <i class="bi bi-send-check me-1" id="submitIcon"></i>Submit for AI Evaluation
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <!-- Answer Already Evaluated -->
+      <div class="border-top pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold mb-0 text-dark">Your Submitted Answer:</h6>
+          <span class="text-muted small">Evaluated on {{ active_question.evaluated_at|date:"M d, Y, h:i A" }}</span>
+        </div>
+        <div class="p-3 bg-light rounded-3 border text-secondary small mb-4" style="line-height: 1.6;">
+          {{ active_question.user_answer|linebreaksbr }}
+        </div>
+
+        <!-- Evaluation Results -->
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clipboard2-check-fill text-primary me-2"></i>AI Rubric Evaluation</h5>
+        <div class="p-3 bg-primary-subtle text-primary rounded-3 small mb-4">
+          {{ active_question.feedback_summary }}
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 bg-light h-100">
+              <h6 class="fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i>Key Strengths</h6>
+              <ul class="mb-0 ps-3 small text-secondary">
+                {% for st in active_question.strengths %}
+                <li>{{ st }}</li>
+                {% empty %}
+                <li>Clear articulation of concepts.</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 bg-light h-100">
+              <h6 class="fw-bold text-warning-emphasis mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Areas for Improvement</h6>
+              <ul class="mb-0 ps-3 small text-secondary">
+                {% for imp in active_question.areas_for_improvement %}
+                <li>{{ imp }}</li>
+                {% empty %}
+                <li>Elaborate on edge cases and architectural trade-offs.</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {% if active_question.ideal_points %}
+        <div class="p-3 border rounded-3 bg-light mb-4">
+          <h6 class="fw-bold text-dark mb-2"><i class="bi bi-stars text-primary me-1"></i>Ideal Concepts to Mention in an Interview</h6>
+          <ul class="mb-0 ps-3 small text-secondary">
+            {% for pt in active_question.ideal_points %}
+            <li>{{ pt }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Navigation Buttons -->
+        <div class="d-flex justify-content-between pt-2">
+          {% if has_prev %}
+          <a href="{% url 'interviews-session' session.id %}?q={{ prev_order }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Previous Question
+          </a>
+          {% else %}
+          <div></div>
+          {% endif %}
+
+          {% if has_next %}
+          <a href="{% url 'interviews-session' session.id %}?q={{ next_order }}" class="btn btn-primary-custom">
+            Next Question <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+          {% else %}
+          <a href="{% url 'interviews-summary' session.id %}" class="btn btn-success px-4">
+            <i class="bi bi-trophy-fill me-1"></i>View Full Session Scorecard
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right Column: Progress & Tips -->
+  <div class="col-lg-4">
+    <!-- Session Status Card -->
+    <div class="cm-card p-4 mb-4">
+      <h6 class="fw-bold mb-3">Interview Progress</h6>
+      <div class="d-flex justify-content-between small text-muted mb-1">
+        <span>Completion:</span>
+        <span class="fw-bold text-primary">{{ session.answered_count }} of {{ questions|length }} Answered</span>
+      </div>
+      <div class="progress mb-3" style="height: 8px;">
+        <div
+          class="progress-bar bg-success"
+          role="progressbar"
+          style="width: {% widthratio session.answered_count questions|length 100 %}%;"
+        ></div>
+      </div>
+
+      <div class="list-group list-group-flush small">
+        {% for q in questions %}
+        <a
+          href="{% url 'interviews-session' session.id %}?q={{ q.order }}"
+          class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0 py-2 {% if q.order == current_order %}fw-bold text-primary{% endif %}"
+        >
+          <span>Q{{ q.order }}: {{ q.category }}</span>
+          {% if q.score is not None %}
+          <span class="badge bg-success-subtle text-success">{{ q.score }}/10</span>
+          {% else %}
+          <span class="badge bg-light text-muted border">Pending</span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- STAR Framework Card for HR -->
+    <div class="cm-card p-4">
+      <h6 class="fw-bold mb-2"><i class="bi bi-diagram-3-fill text-primary me-2"></i>The STAR Framework</h6>
+      <p class="text-muted small mb-3">Top tech companies look for structured story-telling in behavioral answers:</p>
+      <div class="d-flex flex-column gap-2 small">
+        <div class="p-2 bg-light rounded border-start border-3 border-primary">
+          <strong>S &mdash; Situation:</strong> Set the context and background.
+        </div>
+        <div class="p-2 bg-light rounded border-start border-3 border-info">
+          <strong>T &mdash; Task:</strong> What challenge were you solving?
+        </div>
+        <div class="p-2 bg-light rounded border-start border-3 border-warning">
+          <strong>A &mdash; Action:</strong> What specific steps did you take?
+        </div>
+        <div class="p-2 bg-light rounded border-start border-3 border-success">
+          <strong>R &mdash; Result:</strong> What was the quantifiable outcome?
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+  const answerInput = document.getElementById('userAnswerInput');
+  const answerCounter = document.getElementById('answerCounter');
+  if (answerInput && answerCounter) {
+    answerInput.addEventListener('input', function() {
+      const words = this.value.trim().split(/\s+/).filter(Boolean).length;
+      answerCounter.textContent = `${words} words`;
+    });
+  }
+
+  document.getElementById('answerForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('btnSubmitAnswer');
+    const spinner = document.getElementById('submitSpinner');
+    const icon = document.getElementById('submitIcon');
+    if (btn && spinner && icon) {
+      btn.disabled = true;
+      spinner.classList.remove('d-none');
+      icon.classList.add('d-none');
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Evaluating with Gemini...`;
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}

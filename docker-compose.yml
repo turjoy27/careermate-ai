@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:9.0
+    container_name: careermate_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-careermate_ai}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: careermate_web
+    restart: unless-stopped
+    command: >
+      sh -c "cd backend &&
+             python manage.py migrate &&
+             python manage.py seed_resources &&
+             gunicorn careermate_core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD:-rootpassword}
+      - DB_NAME=${DB_NAME:-careermate_ai}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

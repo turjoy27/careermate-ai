@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}Main Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="cm-card p-4 mb-4 border-0" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff;">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <span class="badge bg-white text-primary fw-semibold px-3 py-1 rounded-pill mb-2">
+        <i class="bi bi-person-fill me-1"></i>{{ user.get_role_display }} Workspace
+      </span>
+      <h2 class="fw-bold mb-1">Welcome, {{ user.first_name }}! 👋</h2>
+      <p class="mb-0 opacity-75">
+        {% if profile.target_career %}
+        Aiming for: <strong>{{ profile.target_career }}</strong> in Bangladesh
+        {% else %}
+        Ready to discover your optimal career track? Complete your profile to get started.
+        {% endif %}
+      </p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <a href="{% url 'accounts-profile' %}" class="btn btn-light px-3 py-2 fw-semibold">
+        <i class="bi bi-pencil-square me-1"></i>Edit Profile
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="cm-card stat-card">
+      <div class="stat-icon primary">
+        <i class="bi bi-tags-fill"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ skills_count }}</div>
+        <div class="stat-label">Skills Tracked</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="cm-card stat-card">
+      <div class="stat-icon success">
+        <i class="bi bi-mortarboard-fill"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ educations_count }}</div>
+        <div class="stat-label">Education Records</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="cm-card stat-card">
+      <div class="stat-icon info">
+        <i class="bi bi-bullseye"></i>
+      </div>
+      <div>
+        <div class="stat-value" style="font-size: 1.15rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">
+          {{ profile.target_career|default:"Unset" }}
+        </div>
+        <div class="stat-label">Target Role</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="cm-card stat-card">
+      <div class="stat-icon warning">
+        <i class="bi bi-pie-chart-fill"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ completion }}%</div>
+        <div class="stat-label">Profile Strength</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Profile Completion Tracker -->
+  <div class="col-lg-5">
+    <div class="cm-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Profile Completion</h5>
+        <span class="badge bg-primary-subtle text-primary fw-bold">{{ completion }}%</span>
+      </div>
+
+      <div class="progress mb-3" style="height: 10px;">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ completion }}%;" aria-valuenow="{{ completion }}" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+
+      <p class="text-muted small mb-3">
+        A complete profile powers high-accuracy AI recommendations, CV bullet points, and mock interview questions.
+      </p>
+
+      <ul class="list-group list-group-flush small">
+        {% for check in completion_checks %}
+        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+          <span>{{ check.label }}</span>
+          {% if check.done %}
+          <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          {% else %}
+          <span class="badge bg-light text-muted border"><i class="bi bi-circle me-1"></i>Pending</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+
+      <div class="mt-3 pt-2 text-center">
+        <a href="{% url 'accounts-profile' %}" class="btn btn-sm btn-outline-primary w-100">
+          <i class="bi bi-arrow-right-circle me-1"></i>Complete Remaining Items
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Modules Quick Launch -->
+  <div class="col-lg-7">
+    <div class="cm-card p-4 h-100">
+      <h5 class="fw-bold mb-3"><i class="bi bi-cpu-fill text-primary me-2"></i>AI Career Modules</h5>
+      <p class="text-muted small mb-4">
+        Explore intelligent tools designed to guide you step-by-step from student to hired professional.
+      </p>
+
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-compass-fill text-primary fs-5"></i>
+                <h6 class="fw-bold mb-0">Career Matcher</h6>
+              </div>
+              <p class="text-muted small mb-2">Get AI career track recommendations tailored to BD job market.</p>
+            </div>
+            <a href="{% url 'careers-recommendations' %}" class="btn btn-sm btn-light border text-primary fw-semibold w-100">
+              Explore Matches <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-file-earmark-person-fill text-success fs-5"></i>
+                <h6 class="fw-bold mb-0">AI Resume Studio</h6>
+              </div>
+              <p class="text-muted small mb-2">Polish bullet points and export clean ReportLab PDFs.</p>
+            </div>
+            <a href="{% url 'resumes-list' %}" class="btn btn-sm btn-light border text-success fw-semibold w-100">
+              Open Resume Studio <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-mic-fill text-warning fs-5"></i>
+                <h6 class="fw-bold mb-0">Mock Interviews</h6>
+              </div>
+              <p class="text-muted small mb-2">Simulate technical questions and receive scoring feedback.</p>
+            </div>
+            <a href="{% url 'interviews-setup' %}" class="btn btn-sm btn-light border text-warning fw-semibold w-100">
+              Start Practice Session <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-chat-quote-fill text-info fs-5"></i>
+                <h6 class="fw-bold mb-0">Career Chatbot</h6>
+              </div>
+              <p class="text-muted small mb-2">Ask questions anytime about interviews, tech stacks & salary.</p>
+            </div>
+            <a href="{% url 'chat-portal' %}" class="btn btn-sm btn-light border text-info fw-semibold w-100">
+              Open Advisor Chat <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

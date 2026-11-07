@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}My Profile & Skills — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}Profile Management{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Left Column: User Summary Card -->
+  <div class="col-lg-4">
+    <div class="cm-card p-4 text-center mb-4">
+      <div class="rounded-circle bg-primary-subtle text-primary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 2.2rem;">
+        <i class="bi bi-person-fill"></i>
+      </div>
+      <h4 class="fw-bold mb-1">{{ user.full_name }}</h4>
+      <p class="text-muted small mb-2">{{ user.email }}</p>
+      <span class="badge badge-role {% if user.role == 'student' %}badge-student{% else %}badge-jobseeker{% endif %} mb-3">
+        {{ user.get_role_display }}
+      </span>
+
+      {% if profile.headline %}
+      <p class="small text-secondary mb-3">{{ profile.headline }}</p>
+      {% endif %}
+
+      <div class="border-top pt-3 text-start small">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted"><i class="bi bi-geo-alt me-1"></i>Location:</span>
+          <span class="fw-semibold">{{ profile.city }}, {{ profile.country }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted"><i class="bi bi-bullseye me-1"></i>Target Goal:</span>
+          <span class="fw-semibold text-primary">{{ profile.target_career|default:"Not specified" }}</span>
+        </div>
+        {% if profile.phone %}
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted"><i class="bi bi-telephone me-1"></i>Phone:</span>
+          <span class="fw-semibold">{{ profile.phone }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex justify-content-center gap-2 mt-3 pt-3 border-top">
+        {% if profile.linkedin_url %}
+        <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="LinkedIn">
+          <i class="bi bi-linkedin"></i>
+        </a>
+        {% endif %}
+        {% if profile.github_url %}
+        <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="GitHub">
+          <i class="bi bi-github"></i>
+        </a>
+        {% endif %}
+        {% if profile.portfolio_url %}
+        <a href="{{ profile.portfolio_url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Portfolio">
+          <i class="bi bi-globe"></i>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Skills Overview Card -->
+    <div class="cm-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Skills Portfolio</h5>
+        <button class="btn btn-sm btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addSkillModal">
+          <i class="bi bi-plus-lg me-1"></i>Add Skill
+        </button>
+      </div>
+
+      <div class="skills-container">
+        {% if skills %}
+          {% for skill in skills %}
+          <div class="skill-pill">
+            <span>{{ skill.skill_name }}</span>
+            <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">{{ skill.get_proficiency_display }}</span>
+            <a href="{% url 'accounts-delete-skill' skill.id %}" class="remove-skill ms-1" title="Delete skill" onclick="return confirm('Remove skill {{ skill.skill_name }}?');">
+              <i class="bi bi-x-circle-fill"></i>
+            </a>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted small">
+            <i class="bi bi-tags fs-3 d-block mb-2 text-secondary"></i>
+            No skills added yet. Add at least 3 skills to power AI career recommendations.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Profile Form & Education -->
+  <div class="col-lg-8">
+    <!-- Edit Profile Form -->
+    <div class="cm-card mb-4">
+      <div class="cm-card-header">
+        <h5 class="fw-bold mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Profile Details</h5>
+        <span class="text-muted small">Last updated: {{ profile.updated_at|date:"M d, Y" }}</span>
+      </div>
+      <div class="cm-card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Professional Headline</label>
+            {{ profile_form.headline }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Target Career Track</label>
+            {{ profile_form.target_career }}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">City</label>
+              {{ profile_form.city }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Country</label>
+              {{ profile_form.country }}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Phone Number</label>
+              {{ profile_form.phone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">LinkedIn URL</label>
+              {{ profile_form.linkedin_url }}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">GitHub URL</label>
+              {{ profile_form.github_url }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Portfolio URL</label>
+              {{ profile_form.portfolio_url }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Career Summary</label>
+            {{ profile_form.summary }}
+          </div>
+
+          <div class="d-flex justify-content-end pt-2">
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bi-save me-1"></i>Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Education Section -->
+    <div class="cm-card">
+      <div class="cm-card-header">
+        <h5 class="fw-bold mb-0"><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Education History</h5>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addEducationModal">
+          <i class="bi bi-plus-lg me-1"></i>Add Education
+        </button>
+      </div>
+      <div class="cm-card-body">
+        {% if educations %}
+          {% for edu in educations %}
+          <div class="p-3 mb-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="fw-bold mb-1">{{ edu.degree }} in {{ edu.field_of_study }}</h6>
+              <div class="text-muted small">
+                <i class="bi bi-building me-1"></i>{{ edu.institution }} &bull;
+                <span>{{ edu.start_date|date:"Y" }} – {% if edu.is_current %}Present{% else %}{{ edu.end_date|date:"Y" }}{% endif %}</span>
+                {% if edu.grade %}&bull; <span class="badge bg-secondary-subtle text-secondary">{{ edu.grade }}</span>{% endif %}
+              </div>
+            </div>
+            <a href="{% url 'accounts-delete-education' edu.id %}" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm('Remove education entry?');">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted small">
+            <i class="bi bi-book fs-3 d-block mb-2 text-secondary"></i>
+            No education history recorded. Add your university/college to enrich your CV and recommendations.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Skill -->
+<div class="modal fade" id="addSkillModal" tabindex="-1" aria-labelledby="addSkillModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'accounts-add-skill' %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="addSkillModalLabel">Add New Skill</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Skill Name</label>
+            {{ skill_form.skill_name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Skill Category</label>
+            {{ skill_form.category }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Proficiency Level</label>
+            {{ skill_form.proficiency }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Save Skill</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Education -->
+<div class="modal fade" id="addEducationModal" tabindex="-1" aria-labelledby="addEducationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form action="{% url 'accounts-add-education' %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="addEducationModalLabel">Add Education Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Institution Name</label>
+              {{ edu_form.institution }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Degree / Certification</label>
+              {{ edu_form.degree }}
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Field of Study / Major</label>
+              {{ edu_form.field_of_study }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Grade / CGPA</label>
+              {{ edu_form.grade }}
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Start Date</label>
+              {{ edu_form.start_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">End Date</label>
+              {{ edu_form.end_date }}
+            </div>
+          </div>
+          <div class="form-check mb-2">
+            {{ edu_form.is_current }}
+            <label class="form-check-label small" for="isCurrentEducation">I am currently studying here</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Save Education</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

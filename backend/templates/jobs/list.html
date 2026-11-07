@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}Jobs & Profile Fit — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}Curated Jobs & Fit Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-1">Curated Jobs & Skill-Fit Matching</h3>
+    <p class="text-muted small mb-0">
+      Verified job openings across Bangladesh, scored algorithmically against your profile skills.
+    </p>
+  </div>
+  <a href="{% url 'jobs-saved' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-bookmark-fill text-warning me-1"></i>Saved Jobs
+  </a>
+</div>
+
+<!-- Filters Card -->
+<div class="cm-card p-4 mb-4">
+  <form method="get" class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Keywords</label>
+      <div class="input-group">
+        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" class="form-control" placeholder="Job title, company, or skill..." value="{{ filters.q }}">
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-2">
+      <label class="form-label small fw-semibold">Job Type</label>
+      <select name="job_type" class="form-select">
+        <option value="">All Types</option>
+        <option value="full_time" {% if filters.job_type == 'full_time' %}selected{% endif %}>Full-time</option>
+        <option value="internship" {% if filters.job_type == 'internship' %}selected{% endif %}>Internship</option>
+        <option value="part_time" {% if filters.job_type == 'part_time' %}selected{% endif %}>Part-time</option>
+        <option value="contract" {% if filters.job_type == 'contract' %}selected{% endif %}>Contract</option>
+      </select>
+    </div>
+    <div class="col-sm-6 col-md-2">
+      <label class="form-label small fw-semibold">Experience</label>
+      <select name="experience_level" class="form-select">
+        <option value="">All Levels</option>
+        <option value="entry" {% if filters.experience_level == 'entry' %}selected{% endif %}>Entry / Fresh Grad</option>
+        <option value="mid" {% if filters.experience_level == 'mid' %}selected{% endif %}>Mid-level (1-3 yrs)</option>
+        <option value="senior" {% if filters.experience_level == 'senior' %}selected{% endif %}>Senior (3+ yrs)</option>
+      </select>
+    </div>
+    <div class="col-sm-6 col-md-2">
+      <label class="form-label small fw-semibold">Min Match %</label>
+      <select name="min_match" class="form-select">
+        <option value="">Any Match</option>
+        <option value="75" {% if filters.min_match == '75' %}selected{% endif %}>75%+ Match</option>
+        <option value="50" {% if filters.min_match == '50' %}selected{% endif %}>50%+ Match</option>
+      </select>
+    </div>
+    <div class="col-sm-6 col-md-2 d-flex align-items-end gap-2">
+      <button type="submit" class="btn btn-primary-custom w-100 py-2">
+        <i class="bi bi-funnel-fill me-1"></i>Filter
+      </button>
+      {% if filters.q or filters.job_type or filters.experience_level or filters.min_match %}
+      <a href="{% url 'jobs-list' %}" class="btn btn-light border py-2" title="Reset Filters">
+        <i class="bi bi-x-lg"></i>
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Jobs List -->
+{% if matched_jobs %}
+<div class="d-flex flex-column gap-3">
+  {% for item in matched_jobs %}
+  <div class="cm-card p-4">
+    <div class="row align-items-center">
+      <!-- Job Info -->
+      <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+              <h5 class="fw-bold mb-0 text-dark">{{ item.job.title }}</h5>
+              <span class="badge bg-light text-secondary border small">{{ item.job.get_job_type_display }}</span>
+              <span class="badge bg-light text-secondary border small">{{ item.job.get_workplace_type_display }}</span>
+            </div>
+            <div class="text-muted small">
+              <i class="bi bi-building me-1"></i><strong>{{ item.job.company_name }}</strong> &bull;
+              <i class="bi bi-geo-alt me-1"></i>{{ item.job.location }}
+              {% if item.job.salary_range %}&bull; <span class="text-success fw-semibold">{{ item.job.salary_range }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <p class="text-secondary small mb-3" style="line-height: 1.5;">
+          {{ item.job.description|truncatewords:28 }}
+        </p>
+
+        <!-- Skill Comparison Pills -->
+        <div class="d-flex flex-wrap gap-1 align-items-center">
+          <span class="small text-muted me-1" style="font-size: 0.75rem;">Skills Match:</span>
+          {% for s in item.matched_required %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.75rem;">
+            <i class="bi bi-check me-1"></i>{{ s }}
+          </span>
+          {% endfor %}
+
+          {% for s in item.missing_required %}
+          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 0.75rem;">
+            <i class="bi bi-dash me-1"></i>{{ s }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Match Score & Actions -->
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 border-start-lg ps-lg-4">
+        <div class="d-flex flex-lg-column justify-content-between align-items-lg-end align-items-center gap-2">
+          <div>
+            <div class="d-inline-flex align-items-center gap-2">
+              <div class="text-end">
+                <div class="fs-3 fw-bold text-primary lh-1">{{ item.match_score }}%</div>
+                <div class="text-muted" style="font-size: 0.7rem;">Profile Fit</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mt-lg-3">
+            <button
+              type="button"
+              class="btn btn-sm btn-light border btn-save-job"
+              data-job-id="{{ item.job.id }}"
+              title="Bookmark Job"
+            >
+              <i class="bi {% if item.is_saved %}bi-bookmark-fill text-warning{% else %}bi-bookmark text-muted{% endif %}"></i>
+            </button>
+            <a href="{% url 'jobs-detail' item.job.id %}" class="btn btn-sm btn-primary-custom">
+              View Fit & Apply <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cm-card p-5 text-center">
+  <div class="stat-icon info mx-auto mb-3" style="width: 56px; height: 56px;">
+    <i class="bi bi-briefcase fs-3"></i>
+  </div>
+  <h5 class="fw-bold mb-1">No Jobs Matched Your Filter</h5>
+  <p class="text-muted small mb-3">Try adjusting your keyword, experience level, or match percentage threshold.</p>
+  <a href="{% url 'jobs-list' %}" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.btn-save-job').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const jobId = this.dataset.jobId;
+      const icon = this.querySelector('i');
+      try {
+        const response = await fetch(`/jobs/${jobId}/save/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie('csrftoken')
+          }
+        });
+        const data = await response.json();
+        if (response.ok && data.status === 'success') {
+          if (data.is_saved) {
+            icon.className = 'bi bi-bookmark-fill text-warning';
+          } else {
+            icon.className = 'bi bi-bookmark text-muted';
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

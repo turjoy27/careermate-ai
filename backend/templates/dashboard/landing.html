@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}CareerMate AI — Smart AI Career Assistant for Bangladesh{% endblock %}
+
+{% block public_content %}
+<div class="bg-white border-bottom py-3">
+  <div class="container d-flex justify-content-between align-items-center">
+    <a href="{% url 'landing-home' %}" class="navbar-brand-custom">
+      <div class="brand-icon">
+        <i class="bi bi-briefcase-fill"></i>
+      </div>
+      <span>CareerMate<span class="text-primary">.AI</span></span>
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'accounts-login' %}" class="btn btn-sm btn-outline-secondary">Sign In</a>
+      <a href="{% url 'accounts-register' %}" class="btn btn-sm btn-primary-custom">Get Started</a>
+    </div>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="py-5 bg-light" style="background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);">
+  <div class="container py-5 text-center">
+    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold mb-3">
+      <i class="bi bi-stars me-1"></i>Built for Bangladeshi Graduates & Job Seekers
+    </span>
+    <h1 class="display-4 fw-bold text-dark mb-3 tracking-tight">
+      Launch Your Dream Career with <br class="d-none d-md-block">
+      <span class="text-primary">Intelligent AI Career Guidance</span>
+    </h1>
+    <p class="lead text-muted mx-auto mb-4" style="max-width: 680px;">
+      CareerMate AI diagnoses your skill gaps, generates ATS-compliant CVs, conducts mock technical interviews, and delivers personalized roadmaps tailored to the Bangladesh tech & business market.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="{% url 'accounts-register' %}" class="btn btn-primary-custom btn-lg px-4 py-2">
+        <i class="bi bi-rocket-takeoff-fill me-2"></i>Create Free Account
+      </a>
+      <a href="{% url 'accounts-login' %}" class="btn btn-outline-dark btn-lg px-4 py-2">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Feature Showcase -->
+<section class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Everything You Need to Get Hired</h2>
+      <p class="text-muted">A unified AI ecosystem built to bridge the academia-to-industry gap.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="cm-card p-4 h-100">
+          <div class="stat-icon primary mb-3">
+            <i class="bi bi-compass-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">AI Career Fit Engine</h5>
+          <p class="text-muted small">
+            Analyzes your academic coursework, projects, and personal interests with Google Gemini to suggest high-demand career tracks in Bangladesh.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="cm-card p-4 h-100">
+          <div class="stat-icon success mb-3">
+            <i class="bi bi-file-earmark-diff-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Skill-Gap Diagnostic</h5>
+          <p class="text-muted small">
+            Directly compares your skill profile against live local job descriptions to tell you exactly which tools and frameworks you need next.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="cm-card p-4 h-100">
+          <div class="stat-icon info mb-3">
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">ATS Resume Studio</h5>
+          <p class="text-muted small">
+            AI polishes your project bullet points into high-impact accomplishment statements, exported into clean ReportLab PDF resumes.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="cm-card p-4 h-100">
+          <div class="stat-icon warning mb-3">
+            <i class="bi bi-mic-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Mock Interview Simulator</h5>
+          <p class="text-muted small">
+            Practice domain-specific technical & behavioral questions with real-time rubric-based evaluation and scoring.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="cm-card p-4 h-100">
+          <div class="stat-icon primary mb-3">
+            <i class="bi bi-chat-quote-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">24/7 Career Advisor Chat</h5>
+          <p class="text-muted small">
+            Ask career questions, seek advice on local salaries and companies, and prepare for career fairs with your personal mentor.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="cm-card p-4 h-100">
+          <div class="stat-icon success mb-3">
+            <i class="bi bi-map-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Milestone Roadmaps</h5>
+          <p class="text-muted small">
+            Structured week-by-week learning pathways complete with curated free and open-source learning resources.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="py-4 bg-white border-top text-center text-muted small">
+  <div class="container">
+    <p class="mb-1">&copy; 2026 CareerMate AI. Designed for ambitious professionals and students in Bangladesh.</p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="{% url 'accounts-login' %}" class="text-muted text-decoration-none">Sign In</a>
+      <a href="{% url 'accounts-register' %}" class="text-muted text-decoration-none">Register</a>
+      <a href="/api/health/" class="text-muted text-decoration-none" target="_blank">System Health</a>
+    </div>
+  </div>
+</footer>
+{% endblock %}

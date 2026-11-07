@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Report Content & Feedback — CareerMate AI{% endblock %}
+{% block breadcrumbs %}Support / Report Content{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card border-0 shadow-sm p-3 p-md-4">
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <div class="rounded-circle bg-danger-subtle text-danger p-3 d-inline-flex mb-3">
+            <i class="bi bi-flag-fill fs-2"></i>
+          </div>
+          <h3 class="fw-bold text-dark">Platform Feedback & Issue Reporting</h3>
+          <p class="text-secondary mb-0">
+            Encountered inaccurate AI recommendations, broken job listings, or have suggestions for CareerMate AI? Submit a ticket directly to the platform administration.
+          </p>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-dark">Issue Category <span class="text-danger">*</span></label>
+            <select name="category" class="form-select" required>
+              <option value="general_feedback">General Feedback & Platform Improvement</option>
+              <option value="job_issue">Job Listing Issue / Outdated or Broken Link</option>
+              <option value="ai_inaccuracy">AI Output Inaccuracy / Quality Issue</option>
+              <option value="roadmap_issue">Learning Roadmap / Resource Inaccuracy</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-dark">Subject <span class="text-danger">*</span></label>
+            <input type="text" name="subject" class="form-control" placeholder="Brief summary of your feedback or issue" required>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">Detailed Description <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="5" placeholder="Please provide specific context, steps to reproduce, or details to help our team address your feedback..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm">
+            <i class="bi bi-send-fill me-2"></i>Submit Moderation Ticket
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

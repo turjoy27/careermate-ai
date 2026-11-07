@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}{{ roadmap.title }} — CareerMate AI{% endblock %}
+{% block breadcrumbs %}<a href="{% url 'roadmaps-list' %}" class="text-decoration-none text-secondary">Roadmaps</a> / {{ roadmap.target_role }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .stage-badge-beginner { background-color: #e0f2fe; color: #0284c7; }
+  .stage-badge-intermediate { background-color: #fef3c7; color: #d97706; }
+  .stage-badge-advanced { background-color: #dcfce7; color: #16a34a; }
+  
+  .milestone-item {
+    transition: background-color 0.15s ease-in-out;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .milestone-item:hover {
+    background-color: #f8fafc;
+  }
+  .milestone-item.is-done .milestone-title {
+    text-decoration: line-through;
+    color: #94a3b8;
+  }
+  .stage-card {
+    border-left: 4px solid var(--primary-color);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header & Progress Overview -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary-subtle text-primary px-3 py-1.5 rounded-pill fw-semibold">
+            <i class="bi bi-clock me-1"></i>{{ roadmap.estimated_duration }}
+          </span>
+          <span class="badge bg-light text-muted border">
+            Updated {{ roadmap.updated_at|date:"M d, Y" }}
+          </span>
+        </div>
+        <h2 class="fw-bold text-dark mb-2">{{ roadmap.target_role }}</h2>
+        <p class="text-secondary mb-0">
+          {{ roadmap.skill_gap_summary|default:"Structured progression designed to take you from foundational understanding to full production capability." }}
+        </p>
+      </div>
+
+      <div class="col-lg-5 mt-4 mt-lg-0">
+        <div class="bg-light p-3.5 rounded-3 border">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-semibold text-dark">Roadmap Completion</span>
+            <span class="fw-bold fs-5 text-primary" id="progressPercentageText">{{ roadmap.progress_percentage }}%</span>
+          </div>
+          <div class="progress mb-2" style="height: 10px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: {{ roadmap.progress_percentage }}%;" aria-valuenow="{{ roadmap.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          <div class="d-flex justify-content-between text-muted small">
+            <span><i class="bi bi-check2-circle text-success me-1"></i><span id="milestoneCounter">{{ roadmap.completed_milestones }}/{{ roadmap.total_milestones }}</span> Milestones Completed</span>
+            <span>{{ stages|length }} Stages</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progressive Stages (Beginner -> Intermediate -> Advanced) -->
+<div class="row g-4">
+  {% for stage in stages %}
+  <div class="col-12">
+    <div class="card border-0 shadow-sm stage-card">
+      <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom">
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge stage-badge-{{ stage.stage_level }} px-3 py-2 rounded-pill fw-semibold text-uppercase" style="font-size: 0.75rem;">
+            {{ stage.get_stage_level_display }}
+          </span>
+          <h5 class="fw-bold mb-0 text-dark">{{ stage.title }}</h5>
+        </div>
+        <div class="d-flex align-items-center gap-3 text-muted small">
+          <span><i class="bi bi-calendar3 me-1"></i>{{ stage.duration_weeks }}</span>
+          <span class="badge bg-light text-secondary border" id="stage-badge-{{ stage.id }}">
+            {{ stage.completed_count }}/{{ stage.total_count }} Done
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        {% if stage.description %}
+        <p class="text-secondary small mb-4">{{ stage.description }}</p>
+        {% endif %}
+
+        <div class="row g-4">
+          <!-- Milestones Checklist -->
+          <div class="col-lg-7">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-check2-square text-primary me-2"></i>Actionable Milestones</h6>
+            <div class="d-flex flex-column gap-2" id="milestones-container-{{ stage.id }}">
+              {% for m in stage.milestones.all %}
+              <div class="milestone-item border d-flex align-items-start gap-3 {% if m.is_completed %}is-done{% endif %}" id="milestone-row-{{ m.id }}">
+                <div class="pt-1">
+                  <input class="form-check-input milestone-checkbox" type="checkbox" value="{{ m.id }}" id="m-check-{{ m.id }}" {% if m.is_completed %}checked{% endif %} style="cursor: pointer; width: 1.25rem; height: 1.25rem;">
+                </div>
+                <div class="flex-grow-1">
+                  <label class="form-check-label milestone-title fw-semibold text-dark mb-1 d-block" for="m-check-{{ m.id }}" style="cursor: pointer;">
+                    {{ m.title }}
+                  </label>
+                  {% if m.skills_covered %}
+                  <div class="mb-1">
+                    <span class="text-muted" style="font-size: 0.75rem;">Skills:</span>
+                    <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.7rem;">{{ m.skills_covered }}</span>
+                  </div>
+                  {% endif %}
+                  {% if m.practical_task %}
+                  <div class="bg-light p-2 rounded small text-secondary border" style="font-size: 0.8rem;">
+                    <i class="bi bi-tools text-primary me-1"></i><strong>Mini-Project / Task:</strong> {{ m.practical_task }}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Recommended Stage Resources -->
+          <div class="col-lg-5">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-mortarboard text-primary me-2"></i>Curated Learning Resources</h6>
+            <div class="d-flex flex-column gap-2">
+              {% for r in stage.resources.all %}
+              <div class="border rounded p-3 bg-light d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-white text-secondary border small">{{ r.get_resource_type_display }}</span>
+                    {% if r.is_free %}
+                    <span class="badge bg-success-subtle text-success small">Free</span>
+                    {% endif %}
+                  </div>
+                  <div class="fw-semibold small text-dark">{{ r.title }}</div>
+                </div>
+                {% if r.url %}
+                <a href="{{ r.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary ms-2">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+              </div>
+              {% empty %}
+              <div class="text-muted small p-3 border rounded text-center">
+                Review recommended courses in the <a href="{% url 'roadmaps-list' %}">curated library</a>.
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Interactive Checkbox JS -->
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.querySelectorAll('.milestone-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      const milestoneId = this.value;
+      const row = document.getElementById('milestone-row-' + milestoneId);
+      const isChecked = this.checked;
+
+      fetch(`/roadmaps/milestones/${milestoneId}/toggle/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          // Update visual strikethrough
+          if (data.is_completed) {
+            row.classList.add('is-done');
+          } else {
+            row.classList.remove('is-done');
+          }
+
+          // Update progress bar
+          const pct = data.roadmap_progress_percentage;
+          document.getElementById('progressPercentageText').innerText = pct + '%';
+          const pbar = document.getElementById('progressBar');
+          pbar.style.width = pct + '%';
+          pbar.setAttribute('aria-valuenow', pct);
+
+          // Update total counter
+          document.getElementById('milestoneCounter').innerText = data.roadmap_completed + '/' + data.roadmap_total;
+        }
+      })
+      .catch(err => {
+        console.error('Error toggling milestone:', err);
+      });
+    });
+  });
+</script>
+{% endblock %}

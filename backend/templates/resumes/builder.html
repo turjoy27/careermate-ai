@@ -1,0 +1,668 @@
+{% extends 'base.html' %}
+{% block title %}Resume Studio — {{ resume.title }} — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'resumes-list' %}" class="text-decoration-none text-secondary">AI Resume Studio</a>
+<span class="mx-1">/</span>
+<span class="text-primary">{{ resume.title }}</span>
+{% endblock %}
+
+{% block content %}
+<!-- Studio Top Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">{{ resume.title }}</h3>
+    <span class="text-muted small">Target: <strong>{{ resume.target_role|default:"Unspecified Role" }}</strong></span>
+  </div>
+
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'resumes-list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>All Resumes
+    </a>
+    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exportReviewModal">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i>Review & Export PDF
+    </button>
+    <button type="submit" form="resumeMainForm" class="btn btn-primary-custom btn-sm">
+      <i class="bi bi-save me-1"></i>Save All Changes
+    </button>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Form Editor -->
+  <div class="col-lg-6">
+    <form method="post" id="resumeMainForm">
+      {% csrf_token %}
+
+      <!-- Section: Personal Info -->
+      <div class="cm-card p-4 mb-4">
+        <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-person-lines-fill me-2"></i>1. Personal & Contact Information</h5>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Full Name</label>
+            {{ form.full_name }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Email</label>
+            {{ form.email }}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Phone</label>
+            {{ form.phone }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Location</label>
+            {{ form.location }}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">LinkedIn URL</label>
+            {{ form.linkedin_url }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">GitHub URL</label>
+            {{ form.github_url }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Portfolio URL</label>
+            {{ form.portfolio_url }}
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Resume Title (Internal)</label>
+            {{ form.title }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Target Job Role</label>
+            {{ form.target_role }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Professional Summary -->
+      <div class="cm-card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-card-text me-2"></i>2. Professional Summary</h5>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="btnAiSummary">
+            <span class="spinner-border spinner-border-sm d-none me-1" id="summarySpinner" role="status"></span>
+            <i class="bi bi-magic me-1" id="summaryIcon"></i>Generate with Gemini
+          </button>
+        </div>
+        <p class="text-muted small mb-2">
+          A punchy, honest overview based on your real background. Use the AI generator above to craft or polish it.
+        </p>
+        {{ form.professional_summary }}
+      </div>
+
+      <!-- Section: Skills -->
+      <div class="cm-card p-4 mb-4">
+        <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-tags-fill me-2"></i>3. Technical & Professional Skills</h5>
+        <p class="text-muted small mb-2">
+          Enter skills separated by commas or line breaks (e.g., Python, Django, MySQL, REST APIs, Git).
+        </p>
+        {{ form.skills_raw }}
+      </div>
+
+      <!-- Section: Template Style -->
+      <div class="cm-card p-4 mb-4">
+        <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-palette-fill me-2"></i>4. Template Style</h5>
+        {{ form.template_style }}
+      </div>
+    </form>
+
+    <!-- Section: Work Experience -->
+    <div class="cm-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-briefcase-fill me-2"></i>5. Professional Experience</h5>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addExpModal">
+          <i class="bi bi-plus-lg me-1"></i>Add Experience
+        </button>
+      </div>
+
+      {% if experiences %}
+        {% for exp in experiences %}
+        <div class="p-3 mb-3 border rounded-3 bg-light">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="fw-bold mb-0">{{ exp.position }} &mdash; <span class="text-secondary">{{ exp.company }}</span></h6>
+              <div class="text-muted small mb-2">{{ exp.start_date }} – {{ exp.end_date }} {% if exp.location %}&bull; {{ exp.location }}{% endif %}</div>
+            </div>
+            <a href="{% url 'resumes-delete-experience' resume.id exp.id %}" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete" onclick="return confirm('Remove experience?');">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+          {% if exp.description %}
+          <div class="small text-secondary ps-2 border-start border-2 border-primary">
+            {{ exp.description|linebreaksbr }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-3 text-muted small">No experience records added yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- Section: Projects -->
+    <div class="cm-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-code-slash me-2"></i>6. Notable Projects</h5>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addProjModal">
+          <i class="bi bi-plus-lg me-1"></i>Add Project
+        </button>
+      </div>
+
+      {% if projects %}
+        {% for proj in projects %}
+        <div class="p-3 mb-3 border rounded-3 bg-light">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="fw-bold mb-0">{{ proj.title }}</h6>
+              {% if proj.tech_stack %}<div class="text-muted small mb-1">Stack: {{ proj.tech_stack }}</div>{% endif %}
+            </div>
+            <a href="{% url 'resumes-delete-project' resume.id proj.id %}" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete" onclick="return confirm('Remove project?');">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+          {% if proj.description %}
+          <div class="small text-secondary ps-2 border-start border-2 border-primary mt-1">
+            {{ proj.description|linebreaksbr }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-3 text-muted small">No projects added yet. Add projects to demonstrate your practical technical skills.</div>
+      {% endif %}
+    </div>
+
+    <!-- Section: Education -->
+    <div class="cm-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-mortarboard-fill me-2"></i>7. Academic Education</h5>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addEduModal">
+          <i class="bi bi-plus-lg me-1"></i>Add Education
+        </button>
+      </div>
+
+      {% if educations %}
+        {% for edu in educations %}
+        <div class="p-3 mb-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="fw-bold mb-0">{{ edu.degree }} in {{ edu.field_of_study }}</h6>
+            <div class="text-muted small">{{ edu.institution }} &bull; {{ edu.start_date }} – {{ edu.end_date }} {% if edu.grade %}&bull; Grade: {{ edu.grade }}{% endif %}</div>
+          </div>
+          <a href="{% url 'resumes-delete-education' resume.id edu.id %}" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete" onclick="return confirm('Remove education?');">
+            <i class="bi bi-trash"></i>
+          </a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-3 text-muted small">No education entries added yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right Column: Live Styled Paper Preview -->
+  <div class="col-lg-6">
+    <div class="position-sticky" style="top: 80px;">
+      <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+        <span class="small fw-bold text-muted text-uppercase tracking-wide">
+          <i class="bi bi-file-earmark-text me-1"></i>Live PDF Document Preview
+        </span>
+        <a href="{% url 'resumes-export-pdf' resume.id %}" target="_blank" class="small text-primary text-decoration-none">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open Full PDF
+        </a>
+      </div>
+
+      <!-- Paper Sheet Simulation -->
+      <div class="bg-white border rounded shadow-sm p-4 p-md-5" style="min-height: 750px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 0.85rem; color: #1e293b;">
+        <!-- Header -->
+        <div class="text-center mb-3">
+          <h3 class="fw-bold mb-1" style="color: #1e3a8a; letter-spacing: -0.02em;">
+            {{ resume.full_name|default:"Candidate Name" }}
+          </h3>
+          <div class="text-muted" style="font-size: 0.75rem;">
+            <span>{{ resume.email|default:"email@example.com" }}</span>
+            {% if resume.phone %}&bull; <span>{{ resume.phone }}</span>{% endif %}
+            {% if resume.location %}&bull; <span>{{ resume.location }}</span>{% endif %}
+            {% if resume.linkedin_url %}&bull; <span>LinkedIn</span>{% endif %}
+            {% if resume.github_url %}&bull; <span>GitHub</span>{% endif %}
+          </div>
+          <hr style="border-top: 1.5px solid #1e3a8a; margin: 8px 0 12px;">
+        </div>
+
+        <!-- Summary -->
+        {% if resume.professional_summary %}
+        <div class="mb-3">
+          <div class="fw-bold text-uppercase pb-1 mb-1" style="font-size: 0.75rem; color: #1e3a8a; border-bottom: 0.5px solid #cbd5e1;">
+            Professional Summary
+          </div>
+          <p class="mb-0" style="font-size: 0.8rem; line-height: 1.45; text-align: justify;">
+            {{ resume.professional_summary }}
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- Skills -->
+        {% if resume.skills_list %}
+        <div class="mb-3">
+          <div class="fw-bold text-uppercase pb-1 mb-1" style="font-size: 0.75rem; color: #1e3a8a; border-bottom: 0.5px solid #cbd5e1;">
+            Core Competencies & Skills
+          </div>
+          <div style="font-size: 0.8rem; line-height: 1.45;">
+            {{ resume.skills_list|join:" &bull; " }}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Experience -->
+        {% if experiences %}
+        <div class="mb-3">
+          <div class="fw-bold text-uppercase pb-1 mb-2" style="font-size: 0.75rem; color: #1e3a8a; border-bottom: 0.5px solid #cbd5e1;">
+            Professional Experience
+          </div>
+          {% for exp in experiences %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <div><strong>{{ exp.position }}</strong> &mdash; <em>{{ exp.company }}</em></div>
+              <div class="text-muted" style="font-size: 0.75rem;">{{ exp.start_date }} &ndash; {{ exp.end_date }}</div>
+            </div>
+            {% if exp.description %}
+            <div class="ps-2" style="font-size: 0.8rem; line-height: 1.4;">
+              {{ exp.description|linebreaksbr }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Projects -->
+        {% if projects %}
+        <div class="mb-3">
+          <div class="fw-bold text-uppercase pb-1 mb-2" style="font-size: 0.75rem; color: #1e3a8a; border-bottom: 0.5px solid #cbd5e1;">
+            Key Projects
+          </div>
+          {% for proj in projects %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <div><strong>{{ proj.title }}</strong> {% if proj.tech_stack %}<span class="text-muted">| {{ proj.tech_stack }}</span>{% endif %}</div>
+              {% if proj.github_link %}<div class="text-muted" style="font-size: 0.75rem;">Link</div>{% endif %}
+            </div>
+            {% if proj.description %}
+            <div class="ps-2" style="font-size: 0.8rem; line-height: 1.4;">
+              {{ proj.description|linebreaksbr }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Education -->
+        {% if educations %}
+        <div class="mb-3">
+          <div class="fw-bold text-uppercase pb-1 mb-2" style="font-size: 0.75rem; color: #1e3a8a; border-bottom: 0.5px solid #cbd5e1;">
+            Education
+          </div>
+          {% for edu in educations %}
+          <div class="mb-1">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <div><strong>{{ edu.degree }} in {{ edu.field_of_study }}</strong> &mdash; {{ edu.institution }}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">{{ edu.start_date }} &ndash; {{ edu.end_date }}</div>
+            </div>
+            {% if edu.grade %}<div class="text-muted" style="font-size: 0.75rem;">Grade: {{ edu.grade }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Experience -->
+<div class="modal fade" id="addExpModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'resumes-add-experience' resume.id %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Add Work / Internship Experience</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Company Name</label>
+            {{ exp_form.company }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Job Title / Role</label>
+            {{ exp_form.position }}
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Start Date</label>
+              {{ exp_form.start_date }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">End Date</label>
+              {{ exp_form.end_date }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Location</label>
+            {{ exp_form.location }}
+          </div>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-semibold mb-0">Bullet Descriptions</label>
+              <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="openAiPolisher('id_exp_description', 'Work experience bullet points')">
+                <i class="bi bi-stars"></i> Polish with AI
+              </button>
+            </div>
+            <textarea name="description" id="id_exp_description" class="form-control" rows="3" placeholder="• Developed feature X using Django and MySQL..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Add Experience</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Project -->
+<div class="modal fade" id="addProjModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'resumes-add-project' resume.id %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Add Notable Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Project Title</label>
+            {{ proj_form.title }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Technologies Used</label>
+            {{ proj_form.tech_stack }}
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Live Link</label>
+              {{ proj_form.live_link }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">GitHub Repo</label>
+              {{ proj_form.github_link }}
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-semibold mb-0">Project Description</label>
+              <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="openAiPolisher('id_proj_description', 'Project accomplishments')">
+                <i class="bi bi-stars"></i> Polish with AI
+              </button>
+            </div>
+            <textarea name="description" id="id_proj_description" class="form-control" rows="3" placeholder="• Built an end-to-end full-stack application..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Add Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Education -->
+<div class="modal fade" id="addEduModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'resumes-add-education' resume.id %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Add Academic Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Institution</label>
+            {{ edu_form.institution }}
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Degree</label>
+              {{ edu_form.degree }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Field of Study</label>
+              {{ edu_form.field_of_study }}
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Start Year</label>
+              {{ edu_form.start_date }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">End Year</label>
+              {{ edu_form.end_date }}
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Grade / CGPA</label>
+            {{ edu_form.grade }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Add Education</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: AI Bullet Point Polisher -->
+<div class="modal fade" id="aiPolisherModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-stars text-primary me-2"></i>AI Bullet Point Polisher</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">
+          Gemini will refine your draft with strong action verbs and correct grammar while preserving your exact factual achievements.
+        </p>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Original Draft</label>
+          <textarea id="aiDraftInput" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3 d-none" id="aiResultArea">
+          <label class="form-label small fw-semibold text-success">Polished Version</label>
+          <textarea id="aiPolishedOutput" class="form-control" rows="3"></textarea>
+          <div id="aiImprovementsList" class="mt-2 small text-muted"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-outline-primary" id="btnRunPolish">
+          <span class="spinner-border spinner-border-sm d-none me-1" id="polishSpinner"></span>
+          Improve with Gemini
+        </button>
+        <button type="button" class="btn btn-primary-custom d-none" id="btnApplyPolish">Apply Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Review Before PDF Export -->
+<div class="modal fade" id="exportReviewModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-shield-check text-primary me-2"></i>Review Before PDF Export</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">
+          Please verify that all information in your CV is accurate, truthful, and up-to-date before downloading your official PDF.
+        </p>
+        <div class="list-group list-group-flush small mb-3">
+          <label class="list-group-item d-flex gap-2">
+            <input class="form-check-input flex-shrink-0" type="checkbox" id="checkContact" checked>
+            <span>My phone number, email address, and LinkedIn profile are verified.</span>
+          </label>
+          <label class="list-group-item d-flex gap-2">
+            <input class="form-check-input flex-shrink-0" type="checkbox" id="checkTruth" checked>
+            <span>All project details, GPA, and work dates reflect my actual background.</span>
+          </label>
+          <label class="list-group-item d-flex gap-2">
+            <input class="form-check-input flex-shrink-0" type="checkbox" id="checkSaved" checked>
+            <span>I have saved my latest edits in the builder.</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Keep Editing</button>
+        <a href="{% url 'resumes-export-pdf' resume.id %}?download=1" class="btn btn-primary-custom" id="btnConfirmDownload">
+          <i class="bi bi-download me-1"></i>Download Official PDF
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  let targetTextareaId = null;
+  let polishContext = null;
+
+  function openAiPolisher(textareaId, context) {
+    targetTextareaId = textareaId;
+    polishContext = context;
+    const text = document.getElementById(textareaId)?.value || '';
+    document.getElementById('aiDraftInput').value = text;
+    document.getElementById('aiResultArea').classList.add('d-none');
+    document.getElementById('btnApplyPolish').classList.add('d-none');
+    const modal = new bootstrap.Modal(document.getElementById('aiPolisherModal'));
+    modal.show();
+  }
+
+  document.getElementById('btnRunPolish')?.addEventListener('click', async function() {
+    const draftText = document.getElementById('aiDraftInput').value.trim();
+    if (!draftText) {
+      alert('Please enter or select text to polish.');
+      return;
+    }
+
+    const btn = document.getElementById('btnRunPolish');
+    const spinner = document.getElementById('polishSpinner');
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+
+    try {
+      const response = await fetch("{% url 'resumes-ai-enhance-bullet' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          draft_text: draftText,
+          context: polishContext
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.status === 'success') {
+        document.getElementById('aiPolishedOutput').value = data.enhanced_text;
+        const escapeHtml = (s) => {
+          const d = document.createElement('div');
+          d.textContent = s;
+          return d.innerHTML;
+        };
+        const imps = (data.improvements_made || []).map(i => `<li>${escapeHtml(i)}</li>`).join('');
+        document.getElementById('aiImprovementsList').innerHTML = imps ? `<strong>Edits made:</strong><ul>${imps}</ul>` : '';
+        document.getElementById('aiResultArea').classList.remove('d-none');
+        document.getElementById('btnApplyPolish').classList.remove('d-none');
+      } else {
+        alert(data.message || 'Failed to polish text with AI.');
+      }
+    } catch (err) {
+      alert('Network or server error while reaching Gemini AI.');
+    } finally {
+      btn.disabled = false;
+      spinner.classList.add('d-none');
+    }
+  });
+
+  document.getElementById('btnApplyPolish')?.addEventListener('click', function() {
+    const polished = document.getElementById('aiPolishedOutput').value;
+    if (targetTextareaId) {
+      document.getElementById(targetTextareaId).value = polished;
+    }
+    bootstrap.Modal.getInstance(document.getElementById('aiPolisherModal')).hide();
+  });
+
+  // AI Summary Generator
+  document.getElementById('btnAiSummary')?.addEventListener('click', async function() {
+    const btn = document.getElementById('btnAiSummary');
+    const spinner = document.getElementById('summarySpinner');
+    const icon = document.getElementById('summaryIcon');
+    const summaryTextarea = document.getElementById('id_professional_summary');
+
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+    icon.classList.add('d-none');
+
+    try {
+      const response = await fetch("{% url 'resumes-ai-summary' resume.id %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          target_role: document.getElementById('id_target_role')?.value || ''
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.status === 'success') {
+        if (summaryTextarea) {
+          summaryTextarea.value = data.summary;
+          summaryTextarea.classList.add('border-primary');
+        }
+      } else {
+        alert(data.message || 'Failed to generate summary with AI.');
+      }
+    } catch (err) {
+      alert('Network or server error while generating summary.');
+    } finally {
+      btn.disabled = false;
+      spinner.classList.add('d-none');
+      icon.classList.remove('d-none');
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}

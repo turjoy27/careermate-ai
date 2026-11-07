@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Mock Interview Arena — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}Mock Interview Arena{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-1">AI Mock Interview Arena</h3>
+    <p class="text-muted small mb-0">
+      Practice technical & HR interview questions calibrated to the Bangladesh hiring market, evaluated instantly by Google Gemini.
+    </p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Session Configuration -->
+  <div class="col-lg-5">
+    <div class="cm-card p-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="stat-icon primary" style="width: 44px; height: 44px; font-size: 1.25rem;">
+          <i class="bi bi-mic-fill"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold mb-0">Start Practice Session</h5>
+          <span class="text-muted small">Choose your target position and focus</span>
+        </div>
+      </div>
+
+      <form method="post" id="interviewStartForm">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Target Position / Role</label>
+          <input type="text" name="target_role" class="form-control" placeholder="e.g. Django Backend Developer" value="{{ default_role }}" required>
+          <div class="form-text small">Role name steers the technical depth and domain questions.</div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label small fw-semibold">Experience Level</label>
+            <select name="difficulty" class="form-select">
+              <option value="junior" selected>Junior / Fresh Grad</option>
+              <option value="mid">Mid-Level (1-3 yrs)</option>
+              <option value="senior">Senior (3+ yrs)</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold">Question Count</label>
+            <select name="count" class="form-select">
+              <option value="3" selected>3 Questions (Quick)</option>
+              <option value="4">4 Questions</option>
+              <option value="5">5 Questions (In-depth)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Interview Focus</label>
+          <select name="question_type" class="form-select">
+            <option value="mixed" selected>Technical & Behavioral HR Mixed</option>
+            <option value="technical">Pure Technical & System Design</option>
+            <option value="hr">Behavioral & HR (STAR Framework)</option>
+          </select>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 border small text-muted mb-4">
+          <i class="bi bi-info-circle-fill text-primary me-1"></i>
+          Gemini will generate realistic questions, accept your typed answers, and evaluate them on clarity, technical accuracy, and structure.
+        </div>
+
+        <button type="submit" class="btn btn-primary-custom w-100 py-2" id="btnStartInterview">
+          <span class="spinner-border spinner-border-sm d-none me-2" id="startSpinner"></span>
+          <i class="bi bi-play-fill me-1" id="startIcon"></i>Generate Questions & Begin
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Column: Past Sessions History -->
+  <div class="col-lg-7">
+    <div class="cm-card p-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-primary me-2"></i>Practice History</h5>
+
+      {% if sessions %}
+      <div class="d-flex flex-column gap-3">
+        {% for s in sessions %}
+        <div class="p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h6 class="fw-bold mb-0 text-dark">{{ s.target_role }}</h6>
+              <span class="badge bg-light text-secondary border small">{{ s.get_difficulty_display }}</span>
+              {% if s.is_completed %}
+              <span class="badge bg-success-subtle text-success small"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>
+              {% else %}
+              <span class="badge bg-warning-subtle text-warning-emphasis small">{{ s.answered_count }}/{{ s.total_questions }} Answered</span>
+              {% endif %}
+            </div>
+            <div class="text-muted small">
+              <i class="bi bi-calendar3 me-1"></i>{{ s.created_at|date:"M d, Y, h:i A" }} &bull; {{ s.get_question_type_display }}
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-3">
+            {% if s.overall_score %}
+            <div class="text-end">
+              <div class="fs-5 fw-bold text-primary">{{ s.overall_score }} / 10</div>
+              <div class="text-muted" style="font-size: 0.7rem;">Average Score</div>
+            </div>
+            {% endif %}
+
+            {% if s.is_completed %}
+            <a href="{% url 'interviews-summary' s.id %}" class="btn btn-sm btn-outline-primary">
+              View Scorecard
+            </a>
+            {% else %}
+            <a href="{% url 'interviews-session' s.id %}" class="btn btn-sm btn-primary-custom">
+              Resume <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted small">
+        <i class="bi bi-award fs-3 d-block mb-2 text-secondary"></i>
+        No mock interviews recorded yet. Choose your parameters on the left to launch your first session.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  document.getElementById('interviewStartForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('btnStartInterview');
+    const spinner = document.getElementById('startSpinner');
+    const icon = document.getElementById('startIcon');
+    if (btn && spinner && icon) {
+      btn.disabled = true;
+      spinner.classList.remove('d-none');
+      icon.classList.add('d-none');
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Calibrating Questions with Gemini...`;
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}

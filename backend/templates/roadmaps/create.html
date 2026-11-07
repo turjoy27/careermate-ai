@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Learning Roadmap — CareerMate AI{% endblock %}
+{% block breadcrumbs %}<a href="{% url 'roadmaps-list' %}" class="text-decoration-none text-secondary">Roadmaps</a> / Architect Curriculum{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card border-0 shadow-sm p-3 p-md-4">
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <div class="rounded-circle bg-primary-subtle text-primary p-3 d-inline-flex mb-3">
+            <i class="bi bi-compass fs-2"></i>
+          </div>
+          <h3 class="fw-bold text-dark">Personalized Learning Roadmap</h3>
+          <p class="text-secondary mb-0">
+            CareerMate AI analyzes your recorded skills and designs a structured, 3-stage curriculum (Beginner, Intermediate, Advanced) tailored to land your target role.
+          </p>
+        </div>
+
+        <form method="post" id="roadmapForm">
+          {% csrf_token %}
+
+          <!-- Target Career Goal -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">Target Career Role <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="bi bi-briefcase text-secondary"></i></span>
+              <input type="text" name="target_role" class="form-control" value="{{ default_role }}" placeholder="e.g. Full-Stack Python & Django Developer, Cloud DevOps Specialist" required>
+            </div>
+            <div class="form-text">Specify the job position you aspire to secure.</div>
+          </div>
+
+          <!-- Current Baseline Experience -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">Current Baseline Level <span class="text-danger">*</span></label>
+            <div class="row g-2">
+              <div class="col-4">
+                <input type="radio" class="btn-check" name="experience_level" id="expBeginner" value="beginner" checked>
+                <label class="btn btn-outline-secondary w-100 p-2 text-center" for="expBeginner">
+                  <div class="fw-bold small">Beginner</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">University Student</div>
+                </label>
+              </div>
+              <div class="col-4">
+                <input type="radio" class="btn-check" name="experience_level" id="expIntermediate" value="intermediate">
+                <label class="btn btn-outline-secondary w-100 p-2 text-center" for="expIntermediate">
+                  <div class="fw-bold small">Junior</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Fresh Grad / 1 yr</div>
+                </label>
+              </div>
+              <div class="col-4">
+                <input type="radio" class="btn-check" name="experience_level" id="expAdvanced" value="advanced">
+                <label class="btn btn-outline-secondary w-100 p-2 text-center" for="expAdvanced">
+                  <div class="fw-bold small">Transitioning</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Lateral Career Shift</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Commitment Hours -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">Weekly Study Time Commitment</label>
+            <select name="weekly_hours" class="form-select">
+              <option value="5">5-7 hours / week (Light / Part-time)</option>
+              <option value="10" selected>10-14 hours / week (Steady Pace / Recommended)</option>
+              <option value="20">20-25 hours / week (Intensive Bootcamp Style)</option>
+              <option value="35">30+ hours / week (Full-time Immersion)</option>
+            </select>
+          </div>
+
+          <div class="alert alert-light border small text-secondary d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+            <div>
+              Our Gemini AI Curriculum Engine will diagnose your current skills ({% for s in profile.skills.all %}<span class="badge bg-secondary-subtle text-secondary me-1">{{ s.skill_name }}</span>{% empty %}none recorded{% endfor %}) and tailor the curriculum to fill exact missing market gaps.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2.5 shadow-sm fw-semibold" id="generateBtn">
+            <span class="normal-state"><i class="bi bi-stars me-2"></i>Generate AI Learning Roadmap</span>
+            <span class="loading-state d-none">
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Architecting Custom 3-Stage Curriculum...
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('roadmapForm').addEventListener('submit', function() {
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.querySelector('.normal-state').classList.add('d-none');
+    btn.querySelector('.loading-state').classList.remove('d-none');
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}My Resumes & CVs — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}AI Resume Studio{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-1">AI Resume Studio</h3>
+    <p class="text-muted small mb-0">
+      Build ATS-friendly, professional CVs tailored for Bangladesh & international job applications.
+    </p>
+  </div>
+  <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createResumeModal">
+    <i class="bi bi-plus-lg me-1"></i>Create New Resume
+  </button>
+</div>
+
+{% if resumes %}
+<div class="row g-4">
+  {% for r in resumes %}
+  <div class="col-md-6 col-lg-4">
+    <div class="cm-card h-100 d-flex flex-column justify-content-between">
+      <div class="p-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="badge bg-primary-subtle text-primary small">
+            {{ r.get_template_style_display }}
+          </span>
+          <span class="text-muted" style="font-size: 0.75rem;">
+            Updated {{ r.updated_at|date:"M d, Y" }}
+          </span>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-1">{{ r.title }}</h5>
+        <div class="text-primary small fw-semibold mb-3">
+          {{ r.target_role|default:"General Professional Resume" }}
+        </div>
+
+        <p class="text-muted small mb-3">
+          {% if r.professional_summary %}
+            {{ r.professional_summary|truncatewords:20 }}
+          {% else %}
+            <em>No summary added yet. Use AI generator in the builder.</em>
+          {% endif %}
+        </p>
+
+        <div class="border-top pt-2 small text-muted">
+          <div><i class="bi bi-mortarboard me-1"></i>{{ r.educations.count }} Education entries</div>
+          <div><i class="bi bi-briefcase me-1"></i>{{ r.experiences.count }} Experience entries</div>
+          <div><i class="bi bi-code-slash me-1"></i>{{ r.projects.count }} Projects</div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
+        <div class="d-flex gap-2">
+          <a href="{% url 'resumes-export-pdf' r.id %}?download=1" class="btn btn-sm btn-outline-secondary" title="Download PDF">
+            <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>PDF
+          </a>
+          <a href="{% url 'resumes-export-pdf' r.id %}" target="_blank" class="btn btn-sm btn-light border" title="Preview PDF in Browser">
+            <i class="bi bi-eye"></i>
+          </a>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'resumes-builder' r.id %}" class="btn btn-sm btn-primary-custom">
+            <i class="bi bi-pencil-square me-1"></i>Edit
+          </a>
+          <a href="{% url 'resumes-delete' r.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this resume?');" title="Delete">
+            <i class="bi bi-trash"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="cm-card p-5 text-center">
+  <div class="stat-icon info mx-auto mb-3" style="width: 64px; height: 64px; font-size: 1.8rem;">
+    <i class="bi bi-file-earmark-person"></i>
+  </div>
+  <h4 class="fw-bold mb-2">No Resumes Created Yet</h4>
+  <p class="text-muted small mx-auto mb-4" style="max-width: 500px;">
+    Start building an ATS-optimized CV populated automatically with your academic background and skills.
+  </p>
+  <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createResumeModal">
+    <i class="bi bi-magic me-1"></i>Create First Resume
+  </button>
+</div>
+{% endif %}
+
+<!-- Modal: Create Resume -->
+<div class="modal fade" id="createResumeModal" tabindex="-1" aria-labelledby="createResumeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'resumes-create' %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="createResumeModalLabel">Create New Resume</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Resume Title</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. Software Engineer CV - 2026" required value="Software Engineer CV">
+            <div class="form-text small">Give this version a recognizable name.</div>
+          </div>
+          <div class="p-3 bg-light rounded-3 border small text-muted">
+            <i class="bi bi-info-circle-fill text-primary me-1"></i>
+            CareerMate AI will pre-populate your contact details, education, and skills from your profile so you don't have to retype them.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Initialize & Open Builder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

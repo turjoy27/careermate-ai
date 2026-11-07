@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Recommendation History — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}
+<a href="{% url 'careers-recommendations' %}" class="text-decoration-none text-secondary">Career Recommendations</a>
+<span class="mx-1">/</span>
+<span class="text-primary">Session History</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Career Recommendation History</h3>
+    <p class="text-muted small mb-0">Timeline of past AI career analyses generated for your profile.</p>
+  </div>
+  <a href="{% url 'careers-recommendations' %}" class="btn btn-primary-custom btn-sm">
+    <i class="bi bi-compass me-1"></i>Active Recommendations
+  </a>
+</div>
+
+{% if sessions %}
+<div class="d-flex flex-column gap-4">
+  {% for sess in sessions %}
+  <div class="cm-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary fw-bold">
+          {{ sess.readiness_level|default:"General Analysis" }}
+        </span>
+        <span class="text-muted small">
+          <i class="bi bi-calendar3 me-1"></i>{{ sess.created_at|date:"M d, Y, h:i A" }}
+        </span>
+      </div>
+      <span class="badge bg-light text-secondary border">
+        {{ sess.recommendations.count }} Recommended Paths
+      </span>
+    </div>
+
+    {% if sess.target_analysis %}
+    <p class="text-secondary small mb-3">{{ sess.target_analysis|truncatewords:45 }}</p>
+    {% endif %}
+
+    <div class="row g-2">
+      {% for rec in sess.recommendations.all %}
+      <div class="col-md-6 col-lg-4">
+        <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold small text-dark">{{ rec.title }}</div>
+            <div class="text-muted" style="font-size: 0.75rem;">Match: {{ rec.match_score }}%</div>
+          </div>
+          <a href="{% url 'careers-detail' rec.id %}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
+            View
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cm-card p-5 text-center">
+  <div class="stat-icon primary mx-auto mb-3" style="width: 56px; height: 56px;">
+    <i class="bi bi-clock-history fs-3"></i>
+  </div>
+  <h5 class="fw-bold mb-1">No Past Sessions Recorded</h5>
+  <p class="text-muted small mb-3">You haven't generated any career recommendations yet.</p>
+  <a href="{% url 'careers-recommendations' %}" class="btn btn-primary-custom">
+    Generate First Analysis
+  </a>
+</div>
+{% endif %}
+{% endblock %}

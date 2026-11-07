@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+{% block title %}AI Career Advisor Chat — CareerMate AI{% endblock %}
+
+{% block breadcrumbs %}AI Career Advisor Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chat-layout {
+    display: flex;
+    height: calc(100vh - 160px);
+    background: #ffffff;
+    border: 1px solid var(--cm-slate-200);
+    border-radius: var(--cm-radius-md);
+    overflow: hidden;
+    box-shadow: var(--cm-shadow-sm);
+  }
+
+  .chat-sidebar-pane {
+    width: 280px;
+    border-right: 1px solid var(--cm-slate-200);
+    background-color: #fafbfc;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+  }
+
+  .chat-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--cm-radius-sm);
+    color: var(--cm-slate-700);
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    transition: all 0.15s ease;
+  }
+
+  .chat-history-item:hover {
+    background-color: var(--cm-slate-100);
+    color: var(--cm-primary);
+  }
+
+  .chat-history-item.active {
+    background-color: var(--cm-primary-light);
+    color: var(--cm-primary);
+    font-weight: 600;
+  }
+
+  .chat-main-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .chat-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--cm-slate-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+  }
+
+  .chat-messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .message-row {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 82%;
+  }
+
+  .message-row.user-row {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .message-row.assistant-row {
+    align-self: flex-start;
+  }
+
+  .msg-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+  }
+
+  .msg-avatar.ai {
+    background: linear-gradient(135deg, var(--cm-primary), #7c3aed);
+    color: #fff;
+  }
+
+  .msg-avatar.user {
+    background-color: var(--cm-slate-200);
+    color: var(--cm-slate-700);
+  }
+
+  .msg-bubble {
+    padding: 0.85rem 1.15rem;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    position: relative;
+    word-break: break-word;
+  }
+
+  .assistant-row .msg-bubble {
+    background-color: var(--cm-slate-50);
+    border: 1px solid var(--cm-slate-200);
+    color: var(--cm-dark);
+    border-top-left-radius: 4px;
+  }
+
+  .user-row .msg-bubble {
+    background-color: var(--cm-primary);
+    color: #ffffff;
+    border-top-right-radius: 4px;
+  }
+
+  .msg-meta {
+    font-size: 0.725rem;
+    color: var(--cm-slate-400);
+    margin-top: 0.35rem;
+  }
+
+  .user-row .msg-meta {
+    text-align: right;
+  }
+
+  .chat-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--cm-slate-200);
+    background: #ffffff;
+  }
+
+  .prompt-chip {
+    background: var(--cm-slate-100);
+    border: 1px solid var(--cm-slate-200);
+    border-radius: 9999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--cm-slate-700);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .prompt-chip:hover {
+    background: var(--cm-primary-light);
+    color: var(--cm-primary);
+    border-color: var(--cm-primary);
+  }
+
+  /* Typing animation */
+  .typing-indicator span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--cm-primary);
+    border-radius: 50%;
+    margin-right: 3px;
+    animation: typing 1.4s infinite both;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-4px); }
+  }
+
+  @media (max-width: 767.98px) {
+    .chat-sidebar-pane {
+      display: none;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+  <!-- Sidebar Pane: Threads -->
+  <div class="chat-sidebar-pane">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+      <span class="small fw-bold text-uppercase text-muted tracking-wide">Conversations</span>
+      <a href="{% url 'chat-new' %}" class="btn btn-sm btn-primary-custom py-1 px-2" title="Start New Conversation">
+        <i class="bi bi-plus-lg me-1"></i>New Chat
+      </a>
+    </div>
+
+    <div class="chat-history-list">
+      {% for conv in conversations %}
+      <div class="chat-history-item {% if conv.id == active_conversation.id %}active{% endif %}">
+        <a href="{% url 'chat-conversation' conv.id %}" class="text-truncate text-decoration-none text-reset flex-grow-1">
+          <i class="bi bi-chat-left-text me-2"></i>{{ conv.title }}
+        </a>
+        <a href="{% url 'chat-delete' conv.id %}" class="text-muted ms-2 p-1" title="Delete conversation" onclick="return confirm('Delete this conversation?');">
+          <i class="bi bi-trash" style="font-size: 0.85rem;"></i>
+        </a>
+      </div>
+      {% empty %}
+      <div class="text-center py-4 text-muted small">No conversations yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Main Chat Pane -->
+  <div class="chat-main-pane">
+    <!-- Header -->
+    <div class="chat-header">
+      <div>
+        <h5 class="fw-bold mb-0 text-dark" id="convTitleDisplay">{{ active_conversation.title }}</h5>
+        <div class="text-muted small">
+          <i class="bi bi-shield-check text-success me-1"></i>Context: {{ profile.target_career|default:"General Track" }} &bull; {{ profile.city }}
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'chat-new' %}" class="btn btn-sm btn-outline-primary d-md-none">
+          <i class="bi bi-plus-lg"></i>
+        </a>
+        <a href="{% url 'chat-delete' active_conversation.id %}" class="btn btn-sm btn-outline-danger" title="Clear thread" onclick="return confirm('Delete conversation?');">
+          <i class="bi bi-trash"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Message Stream -->
+    <div class="chat-messages-container" id="chatMessageStream">
+      {% for msg in chat_messages %}
+        {% if msg.sender == 'assistant' %}
+        <div class="message-row assistant-row">
+          <div class="msg-avatar ai">
+            <i class="bi bi-stars"></i>
+          </div>
+          <div>
+            <div class="msg-bubble">
+              {{ msg.message_text|linebreaksbr }}
+            </div>
+            <div class="msg-meta">{{ msg.created_at|date:"h:i A" }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="message-row user-row">
+          <div class="msg-avatar user">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div>
+            <div class="msg-bubble">
+              {{ msg.message_text|linebreaksbr }}
+            </div>
+            <div class="msg-meta">{{ msg.created_at|date:"h:i A" }}</div>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Loading / Typing Indicator Row -->
+      <div class="message-row assistant-row d-none" id="typingIndicatorRow">
+        <div class="msg-avatar ai">
+          <i class="bi bi-stars"></i>
+        </div>
+        <div>
+          <div class="msg-bubble bg-light">
+            <div class="typing-indicator d-inline-block">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="small text-muted ms-2">CareerMate AI is formulating guidance...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Starter Chips -->
+    <div class="px-4 py-2 bg-light border-top d-flex gap-2 overflow-x-auto" id="starterChipsRow" style="white-space: nowrap;">
+      <span class="small text-muted me-1 align-self-center"><i class="bi bi-lightbulb me-1"></i>Try asking:</span>
+      {% for prompt in starter_prompts %}
+      <span class="prompt-chip" onclick="submitPromptChip('{{ prompt|escapejs }}')">{{ prompt }}</span>
+      {% endfor %}
+    </div>
+
+    <!-- Input Footer -->
+    <div class="chat-footer">
+      <form id="chatSendForm" class="d-flex gap-2 align-items-end">
+        {% csrf_token %}
+        <div class="flex-grow-1">
+          <textarea
+            id="chatInputText"
+            class="form-control"
+            rows="1"
+            placeholder="Ask about careers, CV improvements, interviews, or skills in Bangladesh..."
+            style="resize: none; max-height: 120px; overflow-y: auto;"
+            required
+            maxlength="2000"
+          ></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary-custom px-3 py-2" id="btnSendChat">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </form>
+      <div class="d-flex justify-content-between align-items-center mt-1">
+        <span class="text-muted" style="font-size: 0.7rem;">Press Enter to send, Shift+Enter for new line</span>
+        <span class="text-muted" style="font-size: 0.7rem;" id="charCounter">0 / 2000</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const stream = document.getElementById('chatMessageStream');
+  const chatInput = document.getElementById('chatInputText');
+  const chatForm = document.getElementById('chatSendForm');
+  const typingIndicator = document.getElementById('typingIndicatorRow');
+  const btnSend = document.getElementById('btnSendChat');
+  const charCounter = document.getElementById('charCounter');
+  const convId = "{{ active_conversation.id }}";
+
+  // Auto-scroll to bottom
+  function scrollToBottom() {
+    stream.scrollTop = stream.scrollHeight;
+  }
+  scrollToBottom();
+
+  // Character counter and auto-resizing textarea
+  chatInput.addEventListener('input', function() {
+    charCounter.textContent = `${this.value.length} / 2000`;
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
+
+  // Enter to send
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      chatForm.dispatchEvent(new Event('submit'));
+    }
+  });
+
+  function submitPromptChip(promptText) {
+    chatInput.value = promptText;
+    chatForm.dispatchEvent(new Event('submit'));
+  }
+
+  function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function appendMessageToStream(sender, text, timestamp) {
+    const isUser = sender === 'user';
+    const row = document.createElement('div');
+    row.className = `message-row ${isUser ? 'user-row' : 'assistant-row'}`;
+
+    const safeEscaped = escapeHTML(text);
+    const formattedText = safeEscaped.replace(/\n/g, '<br/>');
+
+    row.innerHTML = `
+      <div class="msg-avatar ${isUser ? 'user' : 'ai'}">
+        <i class="bi ${isUser ? 'bi-person-fill' : 'bi-stars'}"></i>
+      </div>
+      <div>
+        <div class="msg-bubble">${formattedText}</div>
+        <div class="msg-meta">${escapeHTML(timestamp || 'Just now')}</div>
+      </div>
+    `;
+
+    // Insert before typing indicator
+    stream.insertBefore(row, typingIndicator);
+    scrollToBottom();
+  }
+
+  chatForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    // Reset input
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    charCounter.textContent = '0 / 2000';
+    btnSend.disabled = true;
+
+    // Append user message immediately
+    appendMessageToStream('user', text, 'Sending...');
+
+    // Show typing animation
+    typingIndicator.classList.remove('d-none');
+    scrollToBottom();
+
+    try {
+      const response = await fetch(`/chat/${convId}/send/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({ message: text })
+      });
+
+      const data = await response.json();
+      typingIndicator.classList.add('d-none');
+
+      if (response.ok && data.status === 'success') {
+        appendMessageToStream('assistant', data.assistant_message.message_text, data.assistant_message.created_at);
+        if (data.conversation_title) {
+          document.getElementById('convTitleDisplay').textContent = data.conversation_title;
+        }
+      } else {
+        appendMessageToStream('assistant', `⚠️ ${data.message || 'Error communicating with AI service.'}`, 'Error');
+      }
+    } catch (err) {
+      typingIndicator.classList.add('d-none');
+      appendMessageToStream('assistant', '⚠️ Network error: could not connect to server.', 'Error');
+    } finally {
+      btnSend.disabled = false;
+      chatInput.focus();
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}
